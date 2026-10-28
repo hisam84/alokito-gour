@@ -141,6 +141,7 @@ function render_ad(string $position): string {
 
 /**
  * Upload image and convert to WebP format if GD is available.
+ * Preserves animated GIF files directly as .gif to maintain frame animations.
  */
 function upload_image_webp(array $file, string $targetDir = 'assets/uploads/news/', int $maxWidth = 1200): ?string {
     if (!isset($file['error']) || $file['error'] !== UPLOAD_ERR_OK) {
@@ -154,12 +155,24 @@ function upload_image_webp(array $file, string $targetDir = 'assets/uploads/news
     }
 
     $mime = mime_content_type($file['tmp_name']);
-    $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!in_array($mime, $allowedMimes, true)) {
         return null;
     }
 
-    $uniqueName = 'news_' . bin2hex(random_bytes(6));
+    $prefix = (strpos($targetDir, 'ads') !== false) ? 'ad_' : 'img_';
+    $uniqueName = $prefix . bin2hex(random_bytes(6));
+
+    // Special handling for GIF: preserve original animated GIF without lossy conversion
+    if ($mime === 'image/gif') {
+        $destFilename = $uniqueName . '.gif';
+        $destPath = $absoluteTargetDir . $destFilename;
+        $success = is_uploaded_file($file['tmp_name']) ? move_uploaded_file($file['tmp_name'], $destPath) : copy($file['tmp_name'], $destPath);
+        if ($success) {
+            return '/' . trim($targetDir, '/') . '/' . $destFilename;
+        }
+        return null;
+    }
 
     // Check if GD WebP conversion is available
     if (function_exists('imagewebp') && function_exists('imagecreatefromstring')) {
@@ -194,7 +207,8 @@ function upload_image_webp(array $file, string $targetDir = 'assets/uploads/news
         $ext = ($mime === 'image/png') ? '.png' : (($mime === 'image/webp') ? '.webp' : '.jpg');
         $destFilename = $uniqueName . $ext;
         $destPath = $absoluteTargetDir . $destFilename;
-        if (move_uploaded_file($file['tmp_name'], $destPath)) {
+        $success = is_uploaded_file($file['tmp_name']) ? move_uploaded_file($file['tmp_name'], $destPath) : copy($file['tmp_name'], $destPath);
+        if ($success) {
             return '/' . trim($targetDir, '/') . '/' . $destFilename;
         }
     }

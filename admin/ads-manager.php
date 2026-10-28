@@ -134,8 +134,9 @@ include __DIR__ . '/includes/header.php';
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label small fw-bold text-secondary">ব্যানার ছবি আপলোড</label>
-                            <input type="file" class="form-control form-control-sm" name="image" accept="image/*">
+                            <label class="form-label small fw-bold text-secondary">ব্যানার ছবি আপলোড (GIF / WebP / JPG / PNG)</label>
+                            <input type="file" class="form-control form-control-sm" name="image" accept="image/png,image/jpeg,image/webp,image/gif">
+                            <div class="form-text small" style="font-size:11px;">অ্যানিমেটেড ব্যানারসহ যে কোনো <strong>GIF</strong>, WebP, PNG বা JPG ইমেজ সাপোর্ট করবে।</div>
                         </div>
 
                         <div class="mb-3">
