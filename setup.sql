@@ -80,6 +80,16 @@ CREATE TABLE IF NOT EXISTS `advertisements` (
   `status` TINYINT(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 6. Page Layouts Table (Page Builder)
+CREATE TABLE IF NOT EXISTS `page_layouts` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `page_slug` VARCHAR(100) NOT NULL UNIQUE,
+  `title` VARCHAR(255) NOT NULL,
+  `layout_data` LONGTEXT NOT NULL,
+  `status` TINYINT(1) DEFAULT 1,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ========================================================
 -- SEED DATA
 -- ========================================================
@@ -179,3 +189,8 @@ INSERT INTO `posts` (`id`, `category_id`, `user_id`, `title`, `slug`, `excerpt`,
 (52, 6, 1, 'টি-টোয়েন্টি বিশ্বকাপের দল ঘোষণা করল বাংলাদেশ ক্রিকেট বোর্ড', 'bcb-announces-t20-world-cup-squad', 'অভিজ্ঞতা ও তারুণ্যের চমৎকার সমন্বয়ে আসন্ন আন্তর্জাতিক টি-টোয়েন্টি বিশ্বকাপের ১৫ সদস্যের স্কোয়াড ঘোষণা করেছে বিসিবির নির্বাচক প্যানেল।', '<p>মিরপুর শের-ই-বাংলা জাতীয় ক্রিকেট স্টেডিয়ামের সংবাদ সম্মেলন কক্ষে বাংলাদেশ ক্রিকেট বোর্ডের (বিসিবি) প্রধান নির্বাচক আসন্ন টি-টোয়েন্টি বিশ্বকাপের জন্য ১৫ সদস্যের চূড়ান্ত স্কোয়াড ঘোষণা করেছেন।</p><p>দলে সাম্প্রতিক ঘরোয়া আসরে দুর্দান্ত পারফর্ম করা তরুণ পেসারদের সুযোগ দেওয়া হয়েছে। অধিনায়ক জানিয়েছেন, দলের বর্তমান ফর্ম এবং টিম কম্বিনেশন ইতিবাচক ফলাফল অর্জনে যথেষ্ট আত্মবিশ্বাসী।</p>', 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&q=80', 'স্পোর্টস রিপোর্টার', 0, 0, 4890, 'published', '2026-10-26 13:21:34'),
 (53, 6, 1, 'চাঁপাইনবাবগঞ্জে জেলা প্রশাসক গোল্ডকাপ ফুটবল টুর্নামেন্টের জমকালো উদ্বোধন', 'chapai-dc-gold-cup-football-tournament-opening', 'চাঁপাইনবাবগঞ্জ পুরাতন স্টেডিয়ামে বর্ণাঢ্য আয়োজনের মধ্য দিয়ে জেলা প্রশাসক গোল্ডকাপ ফুটবল টুর্নামেন্ট ২০২৬ শুরু হয়েছে।', '<p>চাঁপাইনবাবগঞ্জ জেলা ক্রীড়া সংস্থার আয়োজনে ঐতিহাসিক পুরাতন স্টেডিয়াম মাঠে জেলা প্রশাসক গোল্ডকাপ ফুটবল টুর্নামেন্টের জমকালো উদ্বোধন করা হয়েছে।</p><p>উদ্বোধনী খেলায় সদর উপজেলা দল ২-১ গোলে শিবগঞ্জ উপজেলা দলকে পরাজিত করে শুভ সূচনা করে। হাজারো ফুটবলপ্রেমী দর্শক গ্যালারিতে উপস্থিত থেকে খেলোয়াড়দের উৎসাহ জোগান।</p>', 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80', 'জেলা ক্রীড়া প্রতিনিধি', 0, 0, 1760, 'published', '2026-10-26 12:36:34')
 ON DUPLICATE KEY UPDATE `title` = VALUES(`title`);
+
+-- Page Layouts (Default Homepage Layout)
+INSERT INTO `page_layouts` (`id`, `page_slug`, `title`, `layout_data`, `status`)
+VALUES (1, 'home', 'প্রচ্ছদ পাতা (Homepage)', '[{"id":"sec_hero_lead","type":"hero_lead","title":"প্রধান ও শীর্ষ সংবাদ (Hero Lead Section)","settings":{"bottom_thumbs":3,"sub_leads":3}},{"id":"sec_ad_after_lead","type":"ad_banner","title":"বিজ্ঞাপন ব্যানার (লিডের পর)","settings":{"position":"after_lead"}},{"id":"sec_cat_chapai","type":"category_block","title":"চাঁপাইনবাবগঞ্জ","settings":{"category_slug":"chapai-nawabganj","style":"featured_list","limit":5,"show_more":true}},{"id":"sec_cat_national","type":"category_grid","title":"জাতীয়","settings":{"category_slug":"national","limit":4,"show_more":true}},{"id":"sec_cat_politics_intl","type":"category_split","title":"রাজনীতি ও আন্তর্জাতিক","settings":{"left_category":"politics","left_title":"রাজনীতি","right_category":"international","right_title":"আন্তর্জাতিক","limit":4}},{"id":"sec_cat_economy_law","type":"category_split","title":"অর্থনীতি ও আইন-অধিকার","settings":{"left_category":"economy","left_title":"অর্থনীতি","right_category":"law-rights","right_title":"আইন ও অধিকার","limit":4}},{"id":"sec_cat_tech_religion","type":"category_split","title":"বিজ্ঞান ও প্রযুক্তি এবং ধর্ম","settings":{"left_category":"tech","left_title":"বিজ্ঞান ও প্রযুক্তি","right_category":"religion","right_title":"ধর্ম ও জীবন","limit":4}},{"id":"sec_cat_jobs_edu","type":"category_split","title":"চাকরি ও ক্যারিয়ার এবং শিক্ষা-সাহিত্য","settings":{"left_category":"jobs-career","left_title":"চাকরি ও ক্যারিয়ার","right_category":"education-literature","right_title":"শিক্ষা ও সাহিত্য","limit":4}},{"id":"sec_full_country_sports","type":"full_width_split","title":"সারাদেশ ও খেলাধুলা","settings":{"left_category":"country","left_title":"সারাদেশ","right_category":"sports","right_title":"খেলাধুলা","limit":4}},{"id":"sec_gallery","type":"multimedia_gallery","title":"ছবি ও ভিডিও গ্যালারি","settings":{"title":"ছবি ও ভিডিও গ্যালারি","limit":4}}]', 1)
+ON DUPLICATE KEY UPDATE `layout_data` = VALUES(`layout_data`);

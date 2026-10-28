@@ -214,3 +214,107 @@ body {
         display: block;
     }
 }
+
+/* ========================================================
+   Page Builder Drag & Drop UI Styles
+   ======================================================== */
+.builder-canvas {
+    min-height: 400px;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.builder-canvas.is-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+}
+
+.widget-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 5px solid #f3730d;
+    border-radius: 8px;
+    padding: 14px 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.widget-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+}
+
+.widget-card.type-hero_lead { border-left-color: #ef4444; }
+.widget-card.type-ad_banner { border-left-color: #f59e0b; }
+.widget-card.type-category_block { border-left-color: #3b82f6; }
+.widget-card.type-category_grid { border-left-color: #06b6d4; }
+.widget-card.type-category_split { border-left-color: #8b5cf6; }
+.widget-card.type-full_width_split { border-left-color: #10b981; }
+.widget-card.type-multimedia_gallery { border-left-color: #1e293b; }
+.widget-card.type-custom_html { border-left-color: #64748b; }
+
+.widget-card.is-hidden {
+    opacity: 0.55;
+    background: #f1f5f9;
+}
+
+.widget-handle {
+    cursor: grab;
+    padding: 6px 10px;
+    color: #94a3b8;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.widget-handle:hover {
+    color: #f3730d;
+}
+
+.widget-card.sortable-ghost {
+    opacity: 0.35;
+    background: #fef3c7;
+    border: 2px dashed #f59e0b;
+}
+
+.widget-palette-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.widget-palette-item:hover {
+    border-color: #f3730d;
+    background: #fffbeb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(243, 115, 13, 0.1);
+}
+
+.widget-palette-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+

@@ -46,6 +46,12 @@ $currentScript = basename($_SERVER['PHP_SELF']);
                 <span>ক্যাটাগরি ব্যবস্থাপনা</span>
             </a>
         </li>
+        <li>
+            <a href="page-builder.php" class="<?= $currentScript === 'page-builder.php' ? 'active' : '' ?>">
+                <i class="bi bi-layout-text-window-reverse"></i>
+                <span>পেজ বিল্ডার (Page Builder)</span>
+            </a>
+        </li>
 
         <li class="menu-header">মার্কেটিং ও কনফিগারেশন</li>
         <li>

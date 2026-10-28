@@ -21,6 +21,9 @@ ServerSignature Off
     # Clean URL for Search: /search -> search.php
     RewriteRule ^search/?$ search.php [L,QSA]
 
+    # Clean URL for Page Builder Pages: /page/{slug} -> page.php?slug=$1
+    RewriteRule ^page/([^/]+)/?$ page.php?slug=$1 [L,QSA]
+
     # Standard Fallback for real files & directories
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
