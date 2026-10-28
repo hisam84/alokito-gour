@@ -1,3 +1,4 @@
+# Alokito Gour Local Server Launcher
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 try {
@@ -10,8 +11,7 @@ Set-Location $projectRoot
 
 function Show-Banner {
     Write-Host "======================================================================" -ForegroundColor Cyan
-    Write-Host "         ALOKITO GOUR NEWS PORTAL (আলোকিত গৌড় নিউজ পোর্টাল)          " -ForegroundColor Yellow
-    Write-Host "                 Local Development Server Launcher                    " -ForegroundColor Gray
+    Write-Host "       ALOKITO GOUR NEWS PORTAL - LOCAL DEVELOPMENT SERVER            " -ForegroundColor Yellow
     Write-Host "======================================================================" -ForegroundColor Cyan
     Write-Host ""
 }
@@ -62,38 +62,38 @@ $phpBin = Find-PhpBinary
 
 # If PHP is not found anywhere on the computer, prompt with options
 while (-not $phpBin) {
-    Write-Host "[!] এই কম্পিউটারে PHP খুঁজে পাওয়া যায়নি! (PHP is not installed or not in PATH)" -ForegroundColor Red
+    Write-Host "[!] PHP was not detected on this computer!" -ForegroundColor Red
     Write-Host ""
-    Write-Host "সার্ভারটি চালাতে নিচের যেকোনো একটি অপশন বেছে নিন:" -ForegroundColor Yellow
-    Write-Host "  [1] অটোমেটিক পোর্টেবল PHP ডাউনলোড করুন (Automatic Portable PHP Download - Recommended)" -ForegroundColor Cyan
-    Write-Host "  [2] অফিসিয়াল XAMPP ডাউনলোড ওয়েবসাইট খুলুন (Open XAMPP download page)" -ForegroundColor White
-    Write-Host "  [3] আপনার পিসির নির্দিষ্ট PHP পাথ লিখুন (Enter custom PHP path)" -ForegroundColor White
-    Write-Host "  [0] প্রস্থান (Exit)" -ForegroundColor Gray
+    Write-Host "Please choose an option to run the server:" -ForegroundColor Yellow
+    Write-Host "  [1] Automatically download and setup portable PHP (Recommended)" -ForegroundColor Cyan
+    Write-Host "  [2] Open official XAMPP download page" -ForegroundColor White
+    Write-Host "  [3] Enter custom PHP path manually" -ForegroundColor White
+    Write-Host "  [0] Exit" -ForegroundColor Gray
     Write-Host ""
     
-    $choice = Read-Host "আপনার পছন্দ লিখুন (1/2/3/0)"
+    $choice = Read-Host "Enter your choice (1/2/3/0)"
 
     if ($choice -eq "1") {
         $setupScript = Join-Path $projectRoot "tools\setup_portable_php.ps1"
         if (Test-Path $setupScript) {
             & $setupScript
         } else {
-            Write-Host "[!] setup_portable_php.ps1 ফাইলটি পাওয়া যায়নি!" -ForegroundColor Red
+            Write-Host "[!] setup_portable_php.ps1 was not found!" -ForegroundColor Red
         }
         $phpBin = Find-PhpBinary
         if (-not $phpBin) {
-            Write-Host "[!] PHP ডাউনলোড সম্পন্ন হয়নি। পুনরায় চেষ্টা করুন বা XAMPP ইন্সটল করুন।" -ForegroundColor Red
+            Write-Host "[!] PHP download could not be completed. Please install XAMPP or check connection." -ForegroundColor Red
         }
     } elseif ($choice -eq "2") {
         Start-Process "https://www.apachefriends.org/download.html"
-        Write-Host "XAMPP ইন্সটল করার পর এই স্ক্রিপ্টটি পুনরায় রান করুন।" -ForegroundColor Yellow
+        Write-Host "After installing XAMPP, please run this script again." -ForegroundColor Yellow
         exit 0
     } elseif ($choice -eq "3") {
-        $customPath = Read-Host "php.exe এর সম্পূর্ণ পাথ লিখুন (যেমন: C:\php\php.exe)"
+        $customPath = Read-Host "Enter full path to php.exe (e.g. C:\php\php.exe)"
         if ($customPath -and (Test-Path $customPath)) {
             $phpBin = (Resolve-Path $customPath).Path
         } else {
-            Write-Host "[!] ফাইলটি পাওয়া যায়নি: $customPath" -ForegroundColor Red
+            Write-Host "[!] File not found: $customPath" -ForegroundColor Red
         }
     } elseif ($choice -eq "0") {
         exit 0
@@ -112,12 +112,11 @@ if (Test-Path $extDir) {
 # 3. Check SQLite database, auto-initialize if missing
 $sqlitePath = Join-Path $projectRoot "database\alokito_gour.sqlite"
 if (-not (Test-Path $sqlitePath)) {
-    Write-Host "[*] ডাটাবেজ পাওয়া যায়নি, নতুন লোকাল ডাটাবেজ তৈরি হচ্ছে..." -ForegroundColor Yellow
-    Write-Host "[*] Initializing local SQLite database..." -ForegroundColor Yellow
+    Write-Host "[*] Database not found. Initializing local SQLite database..." -ForegroundColor Yellow
     $initScript = Join-Path $projectRoot "database\init_sqlite.php"
     $iniFile = Join-Path $projectRoot "php.ini"
     & $phpBin @extArgs -c $iniFile $initScript
-    Write-Host "[OK] ডাটাবেজ প্রস্তুত! (Database ready)" -ForegroundColor Green
+    Write-Host "[OK] Database ready!" -ForegroundColor Green
     Write-Host ""
 }
 
@@ -135,10 +134,10 @@ function Test-PortOccupied($p) {
 
 $port = 8000
 if (Test-PortOccupied $port) {
-    Write-Host "[!] Port 8000 ব্যস্ত রয়েছে। Port 8080 পরীক্ষা করা হচ্ছে..." -ForegroundColor Yellow
+    Write-Host "[!] Port 8000 is busy. Trying port 8080..." -ForegroundColor Yellow
     $port = 8080
     if (Test-PortOccupied $port) {
-        Write-Host "[!] Port 8080-ও ব্যস্ত রয়েছে। Port 8888 পরীক্ষা করা হচ্ছে..." -ForegroundColor Yellow
+        Write-Host "[!] Port 8080 is also busy. Trying port 8888..." -ForegroundColor Yellow
         $port = 8888
         if (Test-PortOccupied $port) {
             $port = 8001
@@ -157,22 +156,22 @@ try {
 
 # 6. Display server connection details
 Write-Host "======================================================================" -ForegroundColor Green
-Write-Host "   সার্ভার সফলভাবে প্রস্তুত হয়েছে! (Server is Ready)                  " -ForegroundColor Green
+Write-Host "   SERVER IS READY AND RUNNING!                                       " -ForegroundColor Green
 Write-Host "======================================================================" -ForegroundColor Green
-Write-Host "  [OK] PHP ইঞ্জিন:     $phpBin" -ForegroundColor Gray
-Write-Host "  [OK] লোকাল ডাটাবেজ:  database\alokito_gour.sqlite [সক্রিয়]" -ForegroundColor Gray
-Write-Host "  [OK] লোকাল ওয়েবসাইট: http://localhost:$port" -ForegroundColor Cyan
-Write-Host "  [OK] এডমিন প্যানেল:  http://localhost:$port/admin/login.php" -ForegroundColor Cyan
+Write-Host "  [OK] PHP Engine:   $phpBin" -ForegroundColor Gray
+Write-Host "  [OK] Database:     database\alokito_gour.sqlite [Active]" -ForegroundColor Gray
+Write-Host "  [OK] Web Portal:   http://localhost:$port" -ForegroundColor Cyan
+Write-Host "  [OK] Admin Panel:  http://localhost:$port/admin/login.php" -ForegroundColor Cyan
 if ($localIp) {
-    Write-Host "  [OK] মোবাইল / LAN:   http://$($localIp):$port (একই ওয়াইফাইতে)" -ForegroundColor White
+    Write-Host "  [OK] Mobile / LAN: http://$($localIp):$port (On same Wi-Fi)" -ForegroundColor White
 }
 Write-Host "----------------------------------------------------------------------" -ForegroundColor DarkGray
-Write-Host "  এডমিন লগইন তথ্য:" -ForegroundColor Yellow
-Write-Host "    ইমেইল:    admin@alokitogour.com" -ForegroundColor White
-Write-Host "    পাসওয়ার্ড: admin123" -ForegroundColor White
+Write-Host "  Admin Login Credentials:" -ForegroundColor Yellow
+Write-Host "    Email:    admin@alokitogour.com" -ForegroundColor White
+Write-Host "    Password: admin123" -ForegroundColor White
 Write-Host "----------------------------------------------------------------------" -ForegroundColor DarkGray
-Write-Host "  [*] ব্রাউজারে স্বয়ংক্রিয়ভাবে ওয়েবসাইট ওপেন হচ্ছে..." -ForegroundColor DarkCyan
-Write-Host "  [*] সার্ভার বন্ধ করতে এই উইন্ডোতে Ctrl + C চাপুন।" -ForegroundColor Yellow
+Write-Host "  [*] Opening website in your default browser..." -ForegroundColor DarkCyan
+Write-Host "  [*] Press Ctrl + C in this window to stop the server." -ForegroundColor Yellow
 Write-Host "======================================================================" -ForegroundColor Green
 Write-Host ""
 
