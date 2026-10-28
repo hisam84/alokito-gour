@@ -678,3 +678,154 @@ function get_divisions_list(): array {
     return array_keys(get_bangladesh_geo());
 }
 
+/**
+ * Render "আমার এলাকার খবর" (My Area News) Cascading Filter Bar
+ * Division -> District -> Upazila tree selector with red Search button
+ *
+ * @param array $selected ['division' => ..., 'district' => ..., 'upazila' => ...]
+ * @param bool $isSidebar Whether rendering in narrow sidebar (stacks vertically) or wide main area
+ * @param string $customTitle Section title heading
+ * @return string HTML output
+ */
+function render_area_filter_bar(array $selected = [], bool $isSidebar = false, string $customTitle = 'আমার এলাকার খবর'): string {
+    require_once __DIR__ . '/helpers.php';
+    
+    $geo = get_bangladesh_geo();
+    $divisions = array_keys($geo);
+    
+    $currDiv = $selected['division'] ?? '';
+    $currDist = $selected['district'] ?? '';
+    $currUpz = $selected['upazila'] ?? '';
+
+    static $filterBarCount = 0;
+    $filterBarCount++;
+    $uid = $filterBarCount;
+    $formId = "area_form_{$uid}";
+    $divId = "area_div_{$uid}";
+    $distId = "area_dist_{$uid}";
+    $upzId = "area_upz_{$uid}";
+
+    ob_start();
+    ?>
+    <div class="area-filter-widget <?= $isSidebar ? 'area-filter-sidebar mb-4' : 'area-filter-main my-3' ?>">
+        <div class="d-flex align-items-center mb-2">
+            <h5 class="fw-bold text-dark mb-0 d-inline-flex align-items-center" style="font-size: <?= $isSidebar ? '1.05rem' : '1.25rem' ?>;">
+                <?= e($customTitle) ?> <span class="text-danger ms-1 fw-bold fs-6">&gt;</span>
+            </h5>
+        </div>
+
+        <div class="p-3 rounded-2 border" style="background-color: #f1f3f5;">
+            <form action="/area" method="GET" class="row g-2 align-items-center" id="<?= $formId ?>">
+                <!-- Division Select -->
+                <div class="<?= $isSidebar ? 'col-12' : 'col-12 col-sm-6 col-md-3' ?>">
+                    <select class="form-select bg-white" name="division" id="<?= $divId ?>" aria-label="বিভাগ নির্বাচন করুন">
+                        <option value="">বিভাগ</option>
+                        <?php foreach ($divisions as $d): ?>
+                            <option value="<?= e($d) ?>" <?= ($currDiv === $d) ? 'selected' : '' ?>><?= e($d) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- District Select -->
+                <div class="<?= $isSidebar ? 'col-12' : 'col-12 col-sm-6 col-md-3' ?>">
+                    <select class="form-select bg-white" name="district" id="<?= $distId ?>" <?= empty($currDiv) ? 'disabled' : '' ?> aria-label="জেলা নির্বাচন করুন">
+                        <option value="">জেলা</option>
+                    </select>
+                </div>
+
+                <!-- Upazila Select -->
+                <div class="<?= $isSidebar ? 'col-12' : 'col-12 col-sm-6 col-md-3' ?>">
+                    <select class="form-select bg-white" name="upazila" id="<?= $upzId ?>" <?= empty($currDist) ? 'disabled' : '' ?> aria-label="উপজেলা নির্বাচন করুন">
+                        <option value="">উপজেলা</option>
+                    </select>
+                </div>
+
+                <!-- Search Button -->
+                <div class="<?= $isSidebar ? 'col-12' : 'col-12 col-sm-6 col-md-3' ?>">
+                    <button type="submit" class="btn btn-danger w-100 fw-bold d-flex align-items-center justify-content-center gap-2 text-white shadow-sm" style="background-color: #dc2626; border-color: #dc2626; height: 38px;">
+                        <i class="bi bi-search"></i>
+                        <span>খুঁজুন</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        const geoData = <?= json_encode($geo, JSON_UNESCAPED_UNICODE) ?>;
+        const divSelect = document.getElementById('<?= $divId ?>');
+        const distSelect = document.getElementById('<?= $distId ?>');
+        const upzSelect = document.getElementById('<?= $upzId ?>');
+        if (!divSelect || !distSelect || !upzSelect) return;
+
+        function fillDistricts(selectedDiv, preselectedDist, preselectedUpz) {
+            distSelect.innerHTML = '<option value="">জেলা</option>';
+            upzSelect.innerHTML = '<option value="">উপজেলা</option>';
+            upzSelect.disabled = true;
+
+            if (!selectedDiv || !geoData[selectedDiv]) {
+                distSelect.disabled = true;
+                return;
+            }
+
+            distSelect.disabled = false;
+            const districts = Object.keys(geoData[selectedDiv]);
+            districts.forEach(function(d) {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.textContent = d;
+                if (preselectedDist && preselectedDist === d) {
+                    opt.selected = true;
+                }
+                distSelect.appendChild(opt);
+            });
+
+            if (preselectedDist) {
+                fillUpazilas(selectedDiv, preselectedDist, preselectedUpz);
+            }
+        }
+
+        function fillUpazilas(selectedDiv, selectedDist, preselectedUpz) {
+            upzSelect.innerHTML = '<option value="">উপজেলা</option>';
+
+            if (!selectedDist || !geoData[selectedDiv] || !geoData[selectedDiv][selectedDist]) {
+                upzSelect.disabled = true;
+                return;
+            }
+
+            upzSelect.disabled = false;
+            const upazilas = geoData[selectedDiv][selectedDist];
+            upazilas.forEach(function(u) {
+                const opt = document.createElement('option');
+                opt.value = u;
+                opt.textContent = u;
+                if (preselectedUpz && preselectedUpz === u) {
+                    opt.selected = true;
+                }
+                upzSelect.appendChild(opt);
+            });
+        }
+
+        divSelect.addEventListener('change', function() {
+            fillDistricts(this.value);
+        });
+
+        distSelect.addEventListener('change', function() {
+            fillUpazilas(divSelect.value, this.value);
+        });
+
+        // Initialize if preselected values exist
+        const initialDiv = <?= json_encode($currDiv) ?>;
+        const initialDist = <?= json_encode($currDist) ?>;
+        const initialUpz = <?= json_encode($currUpz) ?>;
+        if (initialDiv) {
+            fillDistricts(initialDiv, initialDist, initialUpz);
+        }
+    })();
+    </script>
+    <?php
+    return ob_get_clean();
+}
+
+

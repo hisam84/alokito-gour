@@ -8,6 +8,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/bangladesh_geo.php';
 
 $sideDb = get_db();
 
@@ -17,6 +18,8 @@ if (!isset($currentPageContext)) {
         $currentPageContext = 'single';
     } elseif (isset($category) && !empty($category['id'])) {
         $currentPageContext = 'category';
+    } elseif (isset($_GET['division']) || basename($_SERVER['PHP_SELF'] ?? '') === 'area.php') {
+        $currentPageContext = 'area';
     } elseif (isset($_GET['q']) || basename($_SERVER['PHP_SELF'] ?? '') === 'search.php') {
         $currentPageContext = 'search';
     } elseif (basename($_SERVER['PHP_SELF'] ?? '') === 'index.php' || empty($_SERVER['PATH_INFO'] ?? '')) {
@@ -204,6 +207,9 @@ foreach ($matchingBlocks as $block):
         </div>
 
     <?php elseif ($bType === 'district_filter'): ?>
+        <!-- 3. Regional / District Filter Block -->
+        <?= render_area_filter_bar([], true, !empty($bTitle) ? $bTitle : 'আমার এলাকার খবর') ?>
+    <?php elseif ($bType === 'legacy_district_filter'): ?>
         <!-- 3. Regional / District Filter Block -->
         <div class="sidebar-widget mb-4" data-sidebar-block="district_filter">
             <?php if ($showTitle && !empty($bTitle)): ?>

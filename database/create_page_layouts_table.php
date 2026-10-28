@@ -43,6 +43,13 @@ $defaultHomeLayout = [
         ]
     ],
     [
+        'id' => 'sec_area_filter',
+        'type' => 'district_filter',
+        'title' => 'আমার এলাকার খবর',
+        'container' => 'main',
+        'settings' => []
+    ],
+    [
         'id' => 'sec_cat_chapai',
         'type' => 'category_block',
         'title' => 'চাঁপাইনবাবগঞ্জ',

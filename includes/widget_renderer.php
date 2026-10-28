@@ -672,6 +672,13 @@ function render_widget_sidebar_tabs(array $widget, PDO $db): string {
  * Render District Filter Widget
  */
 function render_widget_district_filter(array $widget, PDO $db): string {
+    require_once __DIR__ . '/bangladesh_geo.php';
+    $title = !empty($widget['title']) ? $widget['title'] : 'আমার এলাকার খবর';
+    return render_area_filter_bar([], false, $title);
+}
+
+/* Deprecated legacy district buttons */
+function _old_render_widget_district_filter_deprecated(array $widget, PDO $db): string {
     ob_start();
     ?>
     <div class="sidebar-widget mb-4" data-widget-id="<?= e($widget['id'] ?? 'district_filter') ?>">

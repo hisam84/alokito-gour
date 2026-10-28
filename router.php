@@ -30,6 +30,11 @@ if (preg_match('#^/category/([^/]+)/?$#', $uri, $matches)) {
 }
 
 // 3. Search: /search -> search.php
+// 4. Area News: /area -> area.php
+if ($uri === '/area' || $uri === '/area/') {
+    require __DIR__ . '/area.php';
+    exit;
+}
 if ($uri === '/search' || $uri === '/search/') {
     require __DIR__ . '/search.php';
     exit;
