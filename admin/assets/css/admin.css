@@ -266,6 +266,51 @@ body {
 .widget-card.type-sidebar_tabs { border-left-color: #0284c7; }
 .widget-card.type-district_filter { border-left-color: #dc2626; }
 
+/* ========================================================
+   Real-Time Live Preview Frame Styles (WordPress / Elementor)
+   ======================================================== */
+.preview-container {
+    background: #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-x: auto;
+    min-height: 780px;
+}
+
+#livePreviewFrame {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s ease, border-width 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    height: 760px;
+}
+
+#livePreviewFrame.device-desktop {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+}
+
+#livePreviewFrame.device-tablet {
+    width: 768px;
+    max-width: 100%;
+    border: 10px solid #1e293b;
+    border-radius: 24px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+}
+
+#livePreviewFrame.device-mobile {
+    width: 375px;
+    max-width: 100%;
+    border: 12px solid #0f172a;
+    border-radius: 32px;
+    box-shadow: 0 20px 35px rgba(0,0,0,0.25);
+}
+
 .widget-card.is-hidden {
     opacity: 0.55;
     background: #f1f5f9;

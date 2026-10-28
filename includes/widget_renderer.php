@@ -736,10 +736,16 @@ function render_single_widget(array $widget, PDO $db, ?array $post = null): stri
  * Render Dynamic News Article Sidebar
  * Renders widgets configured for 'news_sidebar' with per-post custom ad support
  */
-function render_news_sidebar(?array $post, PDO $db): void {
-    $layout = get_page_layout('news_sidebar', $db);
-    if ($layout && !empty($layout['widgets'])) {
-        foreach ($layout['widgets'] as $w) {
+function render_news_sidebar(?array $post, PDO $db, ?array $customWidgets = null): void {
+    if ($customWidgets !== null) {
+        $widgets = $customWidgets;
+    } else {
+        $layout = get_page_layout('news_sidebar', $db);
+        $widgets = $layout['widgets'] ?? [];
+    }
+
+    if (!empty($widgets)) {
+        foreach ($widgets as $w) {
             echo render_single_widget($w, $db, $post);
         }
     } else {
@@ -774,15 +780,17 @@ function get_page_layout(string $slug, PDO $db): ?array {
  * Renders main widgets alongside the sidebar, and full-width widgets below.
  */
 function render_page_layout(string $slug, PDO $db, array $options = []): void {
-    $layout = get_page_layout($slug, $db);
-
-    if (!$layout || empty($layout['widgets'])) {
-        // Fallback message if no layout configured
-        echo '<div class="alert alert-info text-center my-5">এই পাতার কোনো উইজেট সাজানো হয়নি। অ্যাডমিন প্যানেল থেকে পেজ বিল্ডারে যান।</div>';
-        return;
+    if (!empty($options['custom_widgets']) && is_array($options['custom_widgets'])) {
+        $widgets = $options['custom_widgets'];
+    } else {
+        $layout = get_page_layout($slug, $db);
+        if (!$layout || empty($layout['widgets'])) {
+            // Fallback message if no layout configured
+            echo '<div class="alert alert-info text-center my-5">এই পাতার কোনো উইজেট সাজানো হয়নি। অ্যাডমিন প্যানেল থেকে পেজ বিল্ডারে যান।</div>';
+            return;
+        }
+        $widgets = $layout['widgets'];
     }
-
-    $widgets = $layout['widgets'];
 
     // Group widgets by container: 'main' (8-col next to sidebar) vs 'full' (12-col full width)
     $mainWidgets = [];

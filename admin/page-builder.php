@@ -1,7 +1,8 @@
 <?php
 /**
- * Dynamic Drag-and-Drop Page Builder
- * Alokito Gour Clone - WordPress-like Modular Widget Engine
+ * Dynamic Drag-and-Drop Page Builder with Real-Time Live Preview
+ * WordPress/Elementor-Style Real-time Sync & Modular Widget Engine
+ * Alokito Gour Clone
  */
 
 declare(strict_types=1);
@@ -78,8 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($action === 'delete_page') {
         $delSlug = trim($_POST['del_slug'] ?? '');
-        if ($delSlug === 'home') {
-            set_flash('danger', 'হোমপেজ লেআউট মুছে ফেলা যাবে না।');
+        if ($delSlug === 'home' || $delSlug === 'news_sidebar') {
+            set_flash('danger', 'মূল সিস্টেম লেআউট মুছে ফেলা যাবে না।');
         } else {
             $delStmt = $db->prepare("DELETE FROM page_layouts WHERE page_slug = ?");
             $delStmt->execute([$delSlug]);
@@ -238,22 +239,22 @@ if (!is_array($currentWidgets)) {
 include __DIR__ . '/includes/header.php';
 ?>
 
-<div class="content-body p-4">
+<div class="content-body p-3 p-md-4">
     <?php $flash = get_flash(); if ($flash): ?>
-        <div class="alert alert-<?= e($flash['type']) ?> alert-dismissible fade show" role="alert">
+        <div class="alert alert-<?= e($flash['type']) ?> alert-dismissible fade show mb-3" role="alert">
             <?= e($flash['message']) ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     <?php endif; ?>
 
-    <!-- Top Action Bar -->
-    <div class="card border-0 shadow-sm mb-4">
+    <!-- Top Action Toolbar -->
+    <div class="card border-0 shadow-sm mb-3">
         <div class="card-body p-3">
             <div class="row align-items-center g-3">
                 <!-- Page Selector -->
-                <div class="col-lg-5 col-md-6">
+                <div class="col-xl-4 col-lg-5 col-md-6">
                     <div class="d-flex align-items-center gap-2">
-                        <label class="form-label mb-0 fw-bold small text-nowrap"><i class="bi bi-file-earmark-code me-1 text-warning"></i>পাতা নির্বাচন:</label>
+                        <label class="form-label mb-0 fw-bold small text-nowrap"><i class="bi bi-file-earmark-code me-1 text-warning"></i>পাতা:</label>
                         <select class="form-select form-select-sm" id="pageSelector" onchange="location.href='page-builder.php?page=' + this.value;">
                             <?php foreach ($allPages as $p): ?>
                                 <option value="<?= e($p['page_slug']) ?>" <?= $p['page_slug'] === $currentSlug ? 'selected' : '' ?>>
@@ -262,19 +263,34 @@ include __DIR__ . '/includes/header.php';
                             <?php endforeach; ?>
                         </select>
                         <button type="button" class="btn btn-outline-primary btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#createPageModal">
-                            <i class="bi bi-plus-lg me-1"></i>নতুন পাতা
+                            <i class="bi bi-plus-lg"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Page Meta & Action Buttons -->
-                <div class="col-lg-7 col-md-6 text-md-end">
-                    <div class="d-flex align-items-center justify-content-md-end gap-2 flex-wrap">
+                <!-- View Mode Switcher & Device Controls -->
+                <div class="col-xl-4 col-lg-7 col-md-6 text-center">
+                    <div class="d-inline-flex align-items-center gap-1 bg-light p-1 rounded border">
+                        <button type="button" class="btn btn-sm btn-white border shadow-sm active" id="btnModeSplit" onclick="setBuilderMode('split')" title="স্প্লিট মোড: বিল্ডার ও লাইভ প্রিভিউ একসাথে">
+                            <i class="bi bi-layout-split me-1 text-primary"></i>স্প্লিট ভিউ
+                        </button>
+                        <button type="button" class="btn btn-sm btn-light border-0" id="btnModeCanvas" onclick="setBuilderMode('canvas')" title="শুধুমাত্র ক্যানভাস ড্র্যাগ-ড্রপ">
+                            <i class="bi bi-card-checklist me-1 text-secondary"></i>ক্যানভাস
+                        </button>
+                        <button type="button" class="btn btn-sm btn-light border-0" id="btnModePreview" onclick="setBuilderMode('preview')" title="ফুলস্ক্রিন লাইভ প্রিভিউ">
+                            <i class="bi bi-eye me-1 text-success"></i>ফুল প্রিভিউ
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Actions: Reset, Live Link, Save -->
+                <div class="col-xl-4 col-lg-12 text-xl-end text-center">
+                    <div class="d-flex align-items-center justify-content-xl-end justify-content-center gap-2 flex-wrap">
                         <?php 
                         $previewUrl = ($currentSlug === 'home') ? '/' : (($currentSlug === 'news_sidebar') ? '/news/1' : '/page/' . urlencode($currentSlug));
                         ?>
-                        <a href="<?= e($previewUrl) ?>" target="_blank" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-box-arrow-up-right me-1"></i>লাইভ দেখুন
+                        <a href="<?= e($previewUrl) ?>" target="_blank" class="btn btn-outline-secondary btn-sm" title="নতুন ট্যাবে আসল সাইট দেখুন">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>লাইভ সাইট
                         </a>
 
                         <?php if ($currentSlug === 'home'): ?>
@@ -282,23 +298,23 @@ include __DIR__ . '/includes/header.php';
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="form_action" value="reset_default">
                                 <button type="submit" class="btn btn-outline-danger btn-sm" title="ডিফল্ট লেআউটে ফিরিয়ে আনুন">
-                                    <i class="bi bi-arrow-counterclockwise me-1"></i>ডিফল্ট রিসেট
+                                    <i class="bi bi-arrow-counterclockwise"></i>
                                 </button>
                             </form>
-                        <?php else: ?>
+                        <?php elseif ($currentSlug !== 'news_sidebar'): ?>
                             <form method="POST" class="d-inline" onsubmit="return confirm('আপনি কি নিশ্চিত যে এই পাতাটি মুছে ফেলতে চান?');">
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="form_action" value="delete_page">
                                 <input type="hidden" name="del_slug" value="<?= e($currentSlug) ?>">
                                 <button type="submit" class="btn btn-outline-danger btn-sm">
-                                    <i class="bi bi-trash me-1"></i>পাতা মুছুন
+                                    <i class="bi bi-trash"></i>
                                 </button>
                             </form>
                         <?php endif; ?>
 
                         <!-- Big Save Layout Button -->
                         <button type="button" class="btn btn-success btn-sm px-3 fw-bold" id="btnSaveLayout" onclick="saveLayout();">
-                            <i class="bi bi-check2-circle me-1"></i>পরিবর্তন সংরক্ষণ করুন
+                            <i class="bi bi-check2-circle me-1"></i>সংরক্ষণ করুন
                         </button>
                     </div>
                 </div>
@@ -306,148 +322,205 @@ include __DIR__ . '/includes/header.php';
         </div>
     </div>
 
-    <!-- Page Builder Workspace Grid -->
-    <div class="row g-4">
-        <!-- Left: Drag-and-Drop Canvas (8 Cols) -->
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+    <!-- Page Builder Workspace Grid (Supports Split, Canvas, and Full Preview Modes) -->
+    <div class="row g-3" id="workspaceRow">
+        <!-- Column 1: Builder Canvas & Widget Library -->
+        <div class="col-xl-5 col-lg-6" id="builderCol">
+            <!-- Canvas Card -->
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-ui-checks me-2 text-primary"></i>লেআউট ক্যানভাস (ড্র্যাগ এন্ড ড্রপ করে সাজান)</h6>
-                        <small class="text-muted">উইজেটগুলোর হ্যান্ডল <i class="bi bi-grip-vertical"></i> ধরে উপর-নিচ টেনে পছন্দের ক্রমে সাজান।</small>
+                        <h6 class="mb-0 fw-bold text-dark small"><i class="bi bi-ui-checks me-1 text-primary"></i>উইজেট তালিকা (ড্র্যাগ এন্ড ড্রপ)</h6>
                     </div>
-                    <span class="badge bg-secondary-subtle text-secondary" id="widgetCountBadge"><?= count($currentWidgets) ?> টি সেকশন</span>
+                    <span class="badge bg-secondary-subtle text-secondary" id="widgetCountBadge"><?= count($currentWidgets) ?> টি</span>
                 </div>
 
-                <div class="card-body p-3">
+                <div class="card-body p-2 p-md-3">
                     <!-- Drop Canvas -->
-                    <div class="builder-canvas" id="widgetCanvas">
+                    <div class="builder-canvas" id="widgetCanvas" style="min-height: 280px;">
                         <!-- Rendered dynamically by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Widget Drawer Palette -->
+            <div class="card border-0 shadow-sm" id="widgetDrawerCard">
+                <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold text-dark small"><i class="bi bi-puzzle-fill me-1 text-warning"></i>+ উইজেট যোগ করুন (লাইব্রেরি)</h6>
+                    <small class="text-muted" style="font-size: 11px;">ক্লিক করলে যুক্ত হবে</small>
+                </div>
+
+                <div class="card-body p-2 p-md-3" style="max-height: 400px; overflow-y: auto;">
+                    <div class="row g-2">
+                        <!-- 1. Hero Lead -->
+                        <div class="col-12">
+                            <div class="widget-palette-item p-2" onclick="addWidget('hero_lead');">
+                                <div class="widget-palette-icon bg-danger bg-opacity-10 text-danger" style="width:30px; height:30px; font-size:1rem;">
+                                    <i class="bi bi-newspaper"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold small text-dark lh-sm">প্রধান ও শীর্ষ সংবাদ (Hero Lead)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">১টি বড় লিড, ৩টি ছোট থাম্ব ও ৩টি পাশের লিড</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Ad Banner -->
+                        <div class="col-12">
+                            <div class="widget-palette-item p-2" onclick="addWidget('ad_banner');">
+                                <div class="widget-palette-icon bg-warning bg-opacity-10 text-warning" style="width:30px; height:30px; font-size:1rem;">
+                                    <i class="bi bi-badge-ad"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold small text-dark lh-sm">বিজ্ঞাপন ব্যানার (Ad Banner)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">লিড পরবর্তী বা সাইডবার বিজ্ঞাপন ব্যানার</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Category Block -->
+                        <div class="col-12">
+                            <div class="widget-palette-item p-2" onclick="addWidget('category_block');">
+                                <div class="widget-palette-icon bg-primary bg-opacity-10 text-primary" style="width:30px; height:30px; font-size:1rem;">
+                                    <i class="bi bi-card-heading"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold small text-dark lh-sm">ক্যাটাগরি ব্লক (১টি বড় + তালিকা)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">বামে ১টি বড় থাম্ব এবং ডানে বুলেট তালিকা (চাঁপাইনবাবগঞ্জ)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Category Grid -->
+                        <div class="col-12">
+                            <div class="widget-palette-item p-2" onclick="addWidget('category_grid');">
+                                <div class="widget-palette-icon bg-info bg-opacity-10 text-info" style="width:30px; height:30px; font-size:1rem;">
+                                    <i class="bi bi-grid-fill"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold small text-dark lh-sm">ক্যাটাগরি গ্রিড (৪টি থাম্ব কার্ড)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">৪টি ফটোযুক্ত কার্ডের ২x২ রেসপন্সিভ গ্রিড (জাতীয়)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5. Split Category -->
+                        <div class="col-12">
+                            <div class="widget-palette-item p-2" onclick="addWidget('category_split');">
+                                <div class="widget-palette-icon bg-purple bg-opacity-10 text-purple" style="color: #8b5cf6; width:30px; height:30px; font-size:1rem;">
+                                    <i class="bi bi-layout-split"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold small text-dark lh-sm">দ্বৈত ক্যাটাগরি (পাশাপাশি ২টি বিভাগ)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">পাশাপাশি ২টি ভিন্ন ক্যাটাগরির সংবাদ (যেমন রাজনীতি ও আন্তর্জাতিক)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 6. Full-Width Split -->
+                        <div class="col-12">
+                            <div class="widget-palette-item p-2" onclick="addWidget('full_width_split');">
+                                <div class="widget-palette-icon bg-success bg-opacity-10 text-success" style="width:30px; height:30px; font-size:1rem;">
+                                    <i class="bi bi-distribute-horizontal"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold small text-dark lh-sm">ফুল-উইডথ ডাবল ব্লক (সারাদেশ/খেলাধুলা)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">১২ কলাম জুড়ে পাশাপাশি ২টি ক্যাটাগরি</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 7. Multimedia Gallery -->
+                        <div class="col-12">
+                            <div class="widget-palette-item p-2" onclick="addWidget('multimedia_gallery');">
+                                <div class="widget-palette-icon bg-dark bg-opacity-10 text-dark" style="width:30px; height:30px; font-size:1rem;">
+                                    <i class="bi bi-camera-fill"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold small text-dark lh-sm">ছবি ও ভিডিও গ্যালারি (Gallery)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">ডার্ক ব্যাকড্রপে ফটো ও ভিডিও কার্ড</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 8. Custom HTML -->
+                        <div class="col-12">
+                            <div class="widget-palette-item p-2" onclick="addWidget('custom_html');">
+                                <div class="widget-palette-icon bg-secondary bg-opacity-10 text-secondary" style="width:30px; height:30px; font-size:1rem;">
+                                    <i class="bi bi-code-slash"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold small text-dark lh-sm">কাস্টম এইচটিএমএল / নোটিশ (Embed)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">ইউটিউব ভিডিও বা নিজস্ব কাস্টম কোড</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 9. Sidebar Tabs -->
+                        <div class="col-12">
+                            <div class="widget-palette-item p-2" onclick="addWidget('sidebar_tabs');">
+                                <div class="widget-palette-icon bg-info bg-opacity-10 text-info" style="width:30px; height:30px; font-size:1rem;">
+                                    <i class="bi bi-clock-history"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold small text-dark lh-sm">সর্বশেষ ও জনপ্রিয় সংবাদ ট্যাব</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">সাইডবারের জন্য সর্বশেষ ও সর্বাধিক পঠিত সংবাদ</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 10. District Filter -->
+                        <div class="col-12">
+                            <div class="widget-palette-item p-2" onclick="addWidget('district_filter');">
+                                <div class="widget-palette-icon bg-danger bg-opacity-10 text-danger" style="width:30px; height:30px; font-size:1rem;">
+                                    <i class="bi bi-geo-alt-fill"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold small text-dark lh-sm">আমার এলাকার খবর (জেলা ফিল্টার)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">জেলাভিত্তিক বাটন গ্রিড ফিল্টার</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right: Widget Library / Drawer (4 Cols) -->
-        <div class="col-lg-4">
+        <!-- Column 2: WordPress-Style Live Real-Time Preview Pane -->
+        <div class="col-xl-7 col-lg-6" id="previewCol">
             <div class="card border-0 shadow-sm sticky-top" style="top: 80px;">
-                <div class="card-header bg-white py-3 border-bottom">
-                    <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-puzzle-fill me-2 text-warning"></i>উইজেট লাইব্রেরি (যোগ করতে ক্লিক করুন)</h6>
-                    <small class="text-muted">নিচের যেকোনো উইজেটে ক্লিক করলে তা ক্যানভাসে যুক্ত হবে</small>
+                <!-- Preview Device & Control Header -->
+                <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold text-dark small"><i class="bi bi-display me-1 text-success"></i>রিয়েল-টাইম লাইভ প্রিভিউ</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1" id="liveSyncStatus" style="font-size: 11px;">
+                            <span class="spinner-grow spinner-grow-sm text-success" style="width: 7px; height: 7px;"></span>সিঙ্ক সক্রিয়
+                        </span>
+                    </div>
+
+                    <!-- Device Switcher Buttons -->
+                    <div class="d-flex align-items-center gap-1">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-light border active" id="btnDevDesktop" onclick="setPreviewSize('desktop')" title="ডেস্কটপ ভিউ (১০০%)">
+                                <i class="bi bi-display"></i>
+                            </button>
+                            <button type="button" class="btn btn-light border" id="btnDevTablet" onclick="setPreviewSize('tablet')" title="ট্যাবলেট ভিউ (৭৬৮px)">
+                                <i class="bi bi-tablet"></i>
+                            </button>
+                            <button type="button" class="btn btn-light border" id="btnDevMobile" onclick="setPreviewSize('mobile')" title="মোবাইল ভিউ (৩৭৫px)">
+                                <i class="bi bi-phone"></i>
+                            </button>
+                        </div>
+
+                        <button type="button" class="btn btn-light border btn-sm" onclick="refreshLivePreview()" title="রিফ্রেশ প্রিভিউ">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="card-body p-3">
-                    <div class="d-flex flex-column gap-2">
-                        <!-- 1. Hero Lead -->
-                        <div class="widget-palette-item" onclick="addWidget('hero_lead');">
-                            <div class="widget-palette-icon bg-danger bg-opacity-10 text-danger">
-                                <i class="bi bi-newspaper"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold small text-dark">প্রধান ও শীর্ষ সংবাদ (Hero Lead)</div>
-                                <div class="text-muted" style="font-size: 11px;">মূল বড় লিড সংবাদ, ৩টি নিচের থাম্ব এবং ৩টি পার্শ্ব সংবাদ</div>
-                            </div>
-                        </div>
-
-                        <!-- 2. Ad Banner -->
-                        <div class="widget-palette-item" onclick="addWidget('ad_banner');">
-                            <div class="widget-palette-icon bg-warning bg-opacity-10 text-warning">
-                                <i class="bi bi-badge-ad"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold small text-dark">বিজ্ঞাপন ব্যানার (Ad Banner)</div>
-                                <div class="text-muted" style="font-size: 11px;">হেডার, লিডের নিচে বা সংবাদের ভেতরের অ্যাড স্লট</div>
-                            </div>
-                        </div>
-
-                        <!-- 3. Category Block (Featured 1 + List) -->
-                        <div class="widget-palette-item" onclick="addWidget('category_block');">
-                            <div class="widget-palette-icon bg-primary bg-opacity-10 text-primary">
-                                <i class="bi bi-card-heading"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold small text-dark">ক্যাটাগরি ব্লক (১টি বড় + তালিকা)</div>
-                                <div class="text-muted" style="font-size: 11px;">বামে ১টি বড় ফটোযুক্ত সংবাদ এবং ডানে ৪টি বুলেট তালিকা</div>
-                            </div>
-                        </div>
-
-                        <!-- 4. Category Grid (4 Cards) -->
-                        <div class="widget-palette-item" onclick="addWidget('category_grid');">
-                            <div class="widget-palette-icon bg-info bg-opacity-10 text-info">
-                                <i class="bi bi-grid-fill"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold small text-dark">ক্যাটাগরি গ্রিড (৪টি থাম্ব কার্ড)</div>
-                                <div class="text-muted" style="font-size: 11px;">৪টি ফটোসহ কার্ড সম্বলিত ২x২ রেসপন্সিভ গ্রিড</div>
-                            </div>
-                        </div>
-
-                        <!-- 5. Split Category (2 Side-by-Side) -->
-                        <div class="widget-palette-item" onclick="addWidget('category_split');">
-                            <div class="widget-palette-icon bg-purple bg-opacity-10 text-purple" style="color: #8b5cf6;">
-                                <i class="bi bi-layout-split"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold small text-dark">দ্বৈত ক্যাটাগরি (পাশাপাশি ২টি বিভাগ)</div>
-                                <div class="text-muted" style="font-size: 11px;">পাশাপাশি ২টি ভিন্ন ক্যাটাগরির সংবাদ প্রদর্শনী</div>
-                            </div>
-                        </div>
-
-                        <!-- 6. Full-Width Split -->
-                        <div class="widget-palette-item" onclick="addWidget('full_width_split');">
-                            <div class="widget-palette-icon bg-success bg-opacity-10 text-success">
-                                <i class="bi bi-distribute-horizontal"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold small text-dark">ফুল-উইডথ ডাবল ব্লক (সারাদেশ/খেলাধুলা)</div>
-                                <div class="text-muted" style="font-size: 11px;">পুরো প্রস্থ জুড়ে পাশাপাশি ২টি ক্যাটাগরির ৪টি করে কার্ড</div>
-                            </div>
-                        </div>
-
-                        <!-- 7. Multimedia Gallery -->
-                        <div class="widget-palette-item" onclick="addWidget('multimedia_gallery');">
-                            <div class="widget-palette-icon bg-dark bg-opacity-10 text-dark">
-                                <i class="bi bi-camera-fill"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold small text-dark">ছবি ও ভিডিও গ্যালারি (Gallery)</div>
-                                <div class="text-muted" style="font-size: 11px;">আলোকিত গৌড়ের ডার্ক ফটো ও মাল্টিমিডিয়া কার্ড সেকশন</div>
-                            </div>
-                        </div>
-
-                        <!-- 8. Custom HTML -->
-                        <div class="widget-palette-item" onclick="addWidget('custom_html');">
-                            <div class="widget-palette-icon bg-secondary bg-opacity-10 text-secondary">
-                                <i class="bi bi-code-slash"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold small text-dark">কাস্টম এইচটিএমএল / নোটিশ (Embed)</div>
-                                <div class="text-muted" style="font-size: 11px;">ইউটিউব ভিডিও, বিশেষ নোটিশ বা নিজস্ব কাস্টম কোড</div>
-                            </div>
-                        </div>
-
-                        <!-- 9. Sidebar Tabs -->
-                        <div class="widget-palette-item" onclick="addWidget('sidebar_tabs');">
-                            <div class="widget-palette-icon bg-info bg-opacity-10 text-info">
-                                <i class="bi bi-clock-history"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold small text-dark">সর্বশেষ ও জনপ্রিয় সংবাদ ট্যাব</div>
-                                <div class="text-muted" style="font-size: 11px;">সাইডবারের জন্য সর্বশেষ ও সর্বাধিক পঠিত সংবাদের ট্যাব</div>
-                            </div>
-                        </div>
-
-                        <!-- 10. District Filter -->
-                        <div class="widget-palette-item" onclick="addWidget('district_filter');">
-                            <div class="widget-palette-icon bg-danger bg-opacity-10 text-danger">
-                                <i class="bi bi-geo-alt-fill"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold small text-dark">আমার এলাকার খবর (জেলা ফিল্টার)</div>
-                                <div class="text-muted" style="font-size: 11px;">চাঁপাইনবাবগঞ্জ, রাজশাহী, ঢাকাসহ জেলাভিত্তিক বাটন গ্রিড</div>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Preview Frame Viewport -->
+                <div class="card-body p-2 preview-container" id="previewContainer">
+                    <iframe id="livePreviewFrame" class="device-desktop" src="live-preview.php?page=<?= urlencode($currentSlug) ?>" title="Live Real-time Preview"></iframe>
                 </div>
             </div>
         </div>
@@ -546,6 +619,8 @@ const PAGE_SLUG = <?= json_encode($currentSlug) ?>;
 // In-Memory widget structure
 let currentWidgets = <?= json_encode($currentWidgets, JSON_UNESCAPED_UNICODE) ?>;
 let activeEditingIndex = -1;
+let currentMode = 'split'; // 'split', 'canvas', 'preview'
+let currentDevice = 'desktop'; // 'desktop', 'tablet', 'mobile'
 
 // Widget Meta Registry
 const WIDGET_META = {
@@ -637,14 +712,14 @@ const WIDGET_META = {
 function renderCanvas() {
     const canvas = document.getElementById('widgetCanvas');
     const badge = document.getElementById('widgetCountBadge');
-    badge.innerText = `${currentWidgets.length} টি সেকশন`;
+    badge.innerText = `${currentWidgets.length} টি`;
 
     if (currentWidgets.length === 0) {
         canvas.innerHTML = `
-            <div class="text-center py-5 text-muted">
-                <i class="bi bi-layers fs-1 opacity-50 d-block mb-2"></i>
-                <h6>বর্তমানে কোনো উইজেট নেই</h6>
-                <p class="small">ডানপাশের উইজেট লাইব্রেরি থেকে উইজেট যোগ করুন।</p>
+            <div class="text-center py-4 text-muted">
+                <i class="bi bi-layers fs-2 opacity-50 d-block mb-1"></i>
+                <h6 class="small mb-1">বর্তমানে কোনো উইজেট নেই</h6>
+                <p class="text-muted" style="font-size: 11px;">নিচের লাইব্রেরি থেকে উইজেট যোগ করুন।</p>
             </div>
         `;
         return;
@@ -661,42 +736,42 @@ function renderCanvas() {
 
         const isHidden = (w.status === 0 || w.status === '0');
         const container = w.container || meta.defaultContainer || 'main';
-        const containerLabel = (container === 'full') ? 'পূর্ণ প্রস্থ (১২ কলাম)' : 'মূল কলাম (৮ কলাম)';
+        const containerLabel = (container === 'full') ? 'ফুল-উইডথ' : 'মূল কলাম';
         const containerBadgeClass = (container === 'full') ? 'bg-success-subtle text-success' : 'bg-primary-subtle text-primary';
 
         html += `
-            <div class="widget-card ${meta.colorClass} ${isHidden ? 'is-hidden' : ''}" data-index="${idx}">
+            <div class="widget-card ${meta.colorClass} ${isHidden ? 'is-hidden' : ''} p-2 mb-2" data-index="${idx}">
                 <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
-                    <span class="widget-handle" title="টেনে সাজান"><i class="bi bi-grip-vertical"></i></span>
-                    <span class="badge ${containerBadgeClass} me-1" style="font-size: 11px;">${containerLabel}</span>
+                    <span class="widget-handle py-1 px-1" title="টেনে সাজান"><i class="bi bi-grip-vertical"></i></span>
+                    <span class="badge ${containerBadgeClass} p-1" style="font-size: 10px;">${containerLabel}</span>
                     <div class="text-truncate">
-                        <div class="fw-bold text-dark small text-truncate">
+                        <div class="fw-bold text-dark small text-truncate" style="font-size: 12px;">
                             <i class="bi ${meta.icon} me-1 text-muted"></i>${escapeHtml(w.title || meta.label)}
                         </div>
-                        <div class="text-muted" style="font-size: 11px;">
+                        <div class="text-muted text-truncate" style="font-size: 10px;">
                             ${escapeHtml(meta.label)} &bull; ${escapeHtml(describeWidget(w))}
                         </div>
                     </div>
                 </div>
 
-                <div class="d-flex align-items-center gap-1 ms-2">
+                <div class="d-flex align-items-center gap-1 ms-1 flex-shrink-0">
                     <!-- Visibility Toggle -->
-                    <button type="button" class="btn btn-sm ${isHidden ? 'btn-outline-secondary' : 'btn-outline-success'} p-1 px-2" title="${isHidden ? 'প্রদর্শন করুন' : 'লুকান'}" onclick="toggleVisibility(${idx});">
+                    <button type="button" class="btn btn-sm ${isHidden ? 'btn-outline-secondary' : 'btn-outline-success'} p-0 px-1" style="font-size: 11px;" title="${isHidden ? 'প্রদর্শন করুন' : 'লুকান'}" onclick="toggleVisibility(${idx});">
                         <i class="bi ${isHidden ? 'bi-eye-slash' : 'bi-eye'}"></i>
                     </button>
 
                     <!-- Edit Settings -->
-                    <button type="button" class="btn btn-sm btn-outline-primary p-1 px-2" title="উইজেট কনফিগার করুন" onclick="editWidget(${idx});">
+                    <button type="button" class="btn btn-sm btn-outline-primary p-0 px-1" style="font-size: 11px;" title="উইজেট কনফিগার করুন" onclick="editWidget(${idx});">
                         <i class="bi bi-gear-fill"></i>
                     </button>
 
                     <!-- Duplicate -->
-                    <button type="button" class="btn btn-sm btn-outline-secondary p-1 px-2" title="ডুপ্লিকেট করুন" onclick="duplicateWidget(${idx});">
+                    <button type="button" class="btn btn-sm btn-outline-secondary p-0 px-1" style="font-size: 11px;" title="ডুপ্লিকেট করুন" onclick="duplicateWidget(${idx});">
                         <i class="bi bi-copy"></i>
                     </button>
 
                     <!-- Delete -->
-                    <button type="button" class="btn btn-sm btn-outline-danger p-1 px-2" title="মুছে ফেলুন" onclick="deleteWidget(${idx});">
+                    <button type="button" class="btn btn-sm btn-outline-danger p-0 px-1" style="font-size: 11px;" title="মুছে ফেলুন" onclick="deleteWidget(${idx});">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
@@ -715,22 +790,22 @@ function describeWidget(w) {
     switch (w.type) {
         case 'category_block':
         case 'category_grid':
-            return `ক্যাটাগরি: ${s.category_slug || 'জাতীয়'} (${s.limit || 4} টি সংবাদ)`;
+            return `ক্যাটাগরি: ${s.category_slug || 'জাতীয়'} (${s.limit || 4} টি)`;
         case 'category_split':
         case 'full_width_split':
-            return `বাম: ${s.left_title || s.left_category} | ডান: ${s.right_title || s.right_category}`;
+            return `${s.left_title || s.left_category} &bull; ${s.right_title || s.right_category}`;
         case 'ad_banner':
             return `স্লট: ${s.position || 'after_lead'}`;
         case 'hero_lead':
-            return `লিড + ৩ ছোট থাম্ব + ৩ সাইডবার লিড`;
+            return `লিড + ৩ থাম্ব + ৩ সাইডবার`;
         case 'multimedia_gallery':
-            return `গ্যালারি আইটেম (${s.limit || 4} টি)`;
+            return `গ্যালারি (${s.limit || 4} টি)`;
         case 'custom_html':
-            return `কাস্টম এইচটিএমএল কোড`;
+            return `কাস্টম কোড`;
         case 'sidebar_tabs':
-            return `সর্বশেষ ও জনপ্রিয় ট্যাব (${s.limit || 7} টি)`;
+            return `সর্বশেষ ও জনপ্রিয় (${s.limit || 7} টি)`;
         case 'district_filter':
-            return `জেলা ফিল্টার বাটন গ্রিড`;
+            return `জেলা ফিল্টার গ্রিড`;
         default:
             return '';
     }
@@ -754,6 +829,7 @@ function addWidget(type) {
 
     currentWidgets.push(newWidget);
     renderCanvas();
+    updateLivePreview();
     showToast(`'${meta.label}' উইজেট যুক্ত হয়েছে।`);
 }
 
@@ -765,6 +841,7 @@ function toggleVisibility(idx) {
     const currentStatus = currentWidgets[idx].status;
     currentWidgets[idx].status = (currentStatus === 0 || currentStatus === '0') ? 1 : 0;
     renderCanvas();
+    updateLivePreview();
 }
 
 /**
@@ -777,6 +854,7 @@ function duplicateWidget(idx) {
     clone.title = `${clone.title} (কপি)`;
     currentWidgets.splice(idx + 1, 0, clone);
     renderCanvas();
+    updateLivePreview();
     showToast('উইজেট ডুপ্লিকেট করা হয়েছে।');
 }
 
@@ -788,6 +866,7 @@ function deleteWidget(idx) {
     if (confirm(`আপনি কি নিশ্চিত যে '${currentWidgets[idx].title}' উইজেটটি মুছে ফেলতে চান?`)) {
         currentWidgets.splice(idx, 1);
         renderCanvas();
+        updateLivePreview();
         showToast('উইজেট মুছে ফেলা হয়েছে।');
     }
 }
@@ -997,6 +1076,7 @@ function applyWidgetSettings() {
     }
 
     renderCanvas();
+    updateLivePreview();
 
     // Close modal
     const modalEl = document.getElementById('widgetSettingsModal');
@@ -1004,6 +1084,118 @@ function applyWidgetSettings() {
     if (modal) modal.hide();
 
     showToast('উইজেট কনফিগারেশন আপডেট হয়েছে।');
+}
+
+/**
+ * Real-Time Live Preview Sync (WordPress/Elementor-Style)
+ */
+let previewDebounceTimer = null;
+function updateLivePreview() {
+    const syncBadge = document.getElementById('liveSyncStatus');
+    if (syncBadge) {
+        syncBadge.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" style="width: 8px; height: 8px;"></span>সিঙ্ক হচ্ছে...`;
+        syncBadge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle d-inline-flex align-items-center gap-1';
+    }
+
+    clearTimeout(previewDebounceTimer);
+    previewDebounceTimer = setTimeout(() => {
+        const iframe = document.getElementById('livePreviewFrame');
+        if (!iframe) return;
+
+        const formData = new FormData();
+        formData.append('page', PAGE_SLUG);
+        formData.append('layout_data', JSON.stringify(currentWidgets));
+
+        fetch('live-preview.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.text())
+        .then(html => {
+            iframe.srcdoc = html;
+            if (syncBadge) {
+                syncBadge.innerHTML = `<span class="spinner-grow spinner-grow-sm text-success" style="width: 7px; height: 7px;"></span>সিঙ্ক সক্রিয়`;
+                syncBadge.className = 'badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1';
+            }
+        })
+        .catch(err => {
+            console.error('Preview sync failed:', err);
+            if (syncBadge) {
+                syncBadge.innerHTML = `<i class="bi bi-exclamation-triangle text-danger"></i>সিঙ্ক সমস্যা`;
+                syncBadge.className = 'badge bg-danger-subtle text-danger border border-danger-subtle d-inline-flex align-items-center gap-1';
+            }
+        });
+    }, 120);
+}
+
+/**
+ * Refresh live preview manually
+ */
+function refreshLivePreview() {
+    updateLivePreview();
+    showToast('লাইভ প্রিভিউ রিফ্রেশ করা হয়েছে।');
+}
+
+/**
+ * Switch Builder View Mode: 'split', 'canvas', 'preview'
+ */
+function setBuilderMode(mode) {
+    currentMode = mode;
+    const builderCol = document.getElementById('builderCol');
+    const previewCol = document.getElementById('previewCol');
+    const btnSplit = document.getElementById('btnModeSplit');
+    const btnCanvas = document.getElementById('btnModeCanvas');
+    const btnPreview = document.getElementById('btnModePreview');
+
+    btnSplit.classList.remove('active', 'btn-white', 'shadow-sm');
+    btnCanvas.classList.remove('active', 'btn-white', 'shadow-sm');
+    btnPreview.classList.remove('active', 'btn-white', 'shadow-sm');
+
+    if (mode === 'split') {
+        btnSplit.classList.add('active', 'btn-white', 'shadow-sm');
+        builderCol.className = 'col-xl-5 col-lg-6 d-block';
+        previewCol.className = 'col-xl-7 col-lg-6 d-block';
+    } else if (mode === 'canvas') {
+        btnCanvas.classList.add('active', 'btn-white', 'shadow-sm');
+        builderCol.className = 'col-12 d-block';
+        previewCol.className = 'd-none';
+    } else if (mode === 'preview') {
+        btnPreview.classList.add('active', 'btn-white', 'shadow-sm');
+        builderCol.className = 'd-none';
+        previewCol.className = 'col-12 d-block';
+    }
+}
+
+/**
+ * Switch Preview Device Viewport: 'desktop', 'tablet', 'mobile'
+ */
+function setPreviewSize(device) {
+    currentDevice = device;
+    const iframe = document.getElementById('livePreviewFrame');
+    const btnDesktop = document.getElementById('btnDevDesktop');
+    const btnTablet = document.getElementById('btnDevTablet');
+    const btnMobile = document.getElementById('btnDevMobile');
+
+    btnDesktop.classList.remove('active', 'btn-primary', 'text-white');
+    btnTablet.classList.remove('active', 'btn-primary', 'text-white');
+    btnMobile.classList.remove('active', 'btn-primary', 'text-white');
+
+    btnDesktop.classList.add('btn-light');
+    btnTablet.classList.add('btn-light');
+    btnMobile.classList.add('btn-light');
+
+    iframe.className = `device-${device}`;
+
+    if (device === 'desktop') {
+        btnDesktop.classList.add('active', 'btn-primary', 'text-white');
+        btnDesktop.classList.remove('btn-light');
+    } else if (device === 'tablet') {
+        btnTablet.classList.add('active', 'btn-primary', 'text-white');
+        btnTablet.classList.remove('btn-light');
+    } else if (device === 'mobile') {
+        btnMobile.classList.add('active', 'btn-primary', 'text-white');
+        btnMobile.classList.remove('btn-light');
+    }
 }
 
 /**
@@ -1030,6 +1222,7 @@ function saveLayout() {
         btn.innerHTML = originalText;
         if (data.success) {
             showToast(data.message || 'লেআউট সফলভাবে সংরক্ষিত হয়েছে!');
+            updateLivePreview();
         } else {
             alert(data.message || 'লেআউট সংরক্ষণে সমস্যা হয়েছে');
         }
@@ -1079,6 +1272,7 @@ function escapeHtml(str) {
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', function() {
     renderCanvas();
+    updateLivePreview();
 
     // Initialize SortableJS
     const canvas = document.getElementById('widgetCanvas');
@@ -1093,7 +1287,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const movedItem = currentWidgets.splice(oldIndex, 1)[0];
                 currentWidgets.splice(newIndex, 0, movedItem);
                 renderCanvas();
-                showToast('উইজেটের ক্রম পরিবর্তিত হয়েছে। পরিবর্তন সংরক্ষণ বাটনে ক্লিক করুন।');
+                updateLivePreview();
+                showToast('উইজেটের ক্রম পরিবর্তিত হয়েছে। লাইভ প্রিভিউ আপডেট হয়েছে।');
             }
         }
     });
