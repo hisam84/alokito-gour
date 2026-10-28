@@ -205,10 +205,29 @@ function render_widget_hero_lead(array $widget, PDO $db): string {
 /**
  * Render Ad Banner Widget
  */
-function render_widget_ad_banner(array $widget, PDO $db): string {
+function render_widget_ad_banner(array $widget, PDO $db, ?array $post = null): string {
     $settings = $widget['settings'] ?? [];
     $position = $settings['position'] ?? 'after_lead';
     $customCode = $settings['custom_code'] ?? '';
+
+    // If rendering on a single news page and this is the sidebar ad slot
+    if ($post && ($position === 'sidebar' || ($widget['id'] ?? '') === 'sec_side_top_ad')) {
+        $adType = $post['sidebar_ad_type'] ?? 'global';
+        if ($adType === 'none') {
+            return '';
+        }
+        if ($adType === 'code' && !empty($post['sidebar_ad_code'])) {
+            return '<div class="ad-container ad-sidebar mb-3 text-center" data-widget-id="' . e($widget['id'] ?? 'ad') . '">' . $post['sidebar_ad_code'] . '</div>';
+        }
+        if ($adType === 'custom' && !empty($post['sidebar_ad_image'])) {
+            $target = !empty($post['sidebar_ad_url']) ? e($post['sidebar_ad_url']) : '#';
+            return '<div class="ad-container ad-sidebar mb-3 text-center" data-widget-id="' . e($widget['id'] ?? 'ad') . '">
+                <a href="' . $target . '" target="_blank" rel="noopener" class="d-block w-100">
+                    <img src="' . e($post['sidebar_ad_image']) . '" alt="' . e($post['title'] ?? 'Advertisement') . '" class="img-fluid rounded border shadow-sm w-100" style="width: 100%; height: auto; display: block;">
+                </a>
+            </div>';
+        }
+    }
 
     if (!empty($customCode)) {
         return '<div class="ad-container mb-3 text-center" data-widget-id="' . e($widget['id'] ?? 'ad') . '">' . $customCode . '</div>';
@@ -575,9 +594,110 @@ function render_widget_custom_html(array $widget, PDO $db): string {
 }
 
 /**
+ * Render Sidebar Tabs Widget (Latest / Popular News)
+ */
+function render_widget_sidebar_tabs(array $widget, PDO $db): string {
+    $settings = $widget['settings'] ?? [];
+    $limit = (int)($settings['limit'] ?? 7);
+
+    // Latest Posts
+    $lStmt = $db->prepare("SELECT id, title, slug, created_at, views FROM `posts` WHERE `status` = 'published' ORDER BY `id` DESC LIMIT :limit");
+    $lStmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $lStmt->execute();
+    $latestPosts = $lStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Popular Posts
+    $pStmt = $db->prepare("SELECT id, title, slug, created_at, views FROM `posts` WHERE `status` = 'published' ORDER BY `views` DESC, `id` DESC LIMIT :limit");
+    $pStmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $pStmt->execute();
+    $popularPosts = $pStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    ob_start();
+    ?>
+    <div class="sidebar-widget mb-4" data-widget-id="<?= e($widget['id'] ?? 'sidebar_tabs') ?>">
+        <ul class="nav nav-tabs sidebar-tabs mb-3 border-bottom" id="sidebarTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="latest-tab" data-bs-toggle="tab" data-bs-target="#latest-pane" type="button" role="tab" aria-controls="latest-pane" aria-selected="true">
+                    <i class="bi bi-clock-history me-1"></i>সর্বশেষ
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="popular-tab" data-bs-toggle="tab" data-bs-target="#popular-pane" type="button" role="tab" aria-controls="popular-pane" aria-selected="false">
+                    <i class="bi bi-fire me-1"></i>জনপ্রিয়
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="sidebarTabContent">
+            <!-- Latest News Pane -->
+            <div class="tab-pane fade show active" id="latest-pane" role="tabpanel" aria-labelledby="latest-tab" tabindex="0">
+                <?php $counter = 1; foreach ($latestPosts as $item): ?>
+                    <div class="tab-post-item">
+                        <div class="item-num"><?= bn_number($counter++) ?></div>
+                        <div class="item-content">
+                            <a href="/news/<?= (int)$item['id'] ?>/<?= e($item['slug']) ?>" class="item-title d-block">
+                                <?= e($item['title']) ?>
+                            </a>
+                            <span class="small text-muted" style="font-size:11px;">
+                                <i class="bi bi-clock me-1"></i><?= get_time_ago($item['created_at']) ?>
+                            </span>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+            <!-- Popular News Pane -->
+            <div class="tab-pane fade" id="popular-pane" role="tabpanel" aria-labelledby="popular-tab" tabindex="0">
+                <?php $counter = 1; foreach ($popularPosts as $item): ?>
+                    <div class="tab-post-item">
+                        <div class="item-num"><?= bn_number($counter++) ?></div>
+                        <div class="item-content">
+                            <a href="/news/<?= (int)$item['id'] ?>/<?= e($item['slug']) ?>" class="item-title d-block">
+                                <?= e($item['title']) ?>
+                            </a>
+                            <span class="small text-muted" style="font-size:11px;">
+                                <i class="bi bi-eye me-1"></i><?= bn_number($item['views']) ?> বার পঠিত
+                            </span>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+/**
+ * Render District Filter Widget
+ */
+function render_widget_district_filter(array $widget, PDO $db): string {
+    ob_start();
+    ?>
+    <div class="sidebar-widget mb-4" data-widget-id="<?= e($widget['id'] ?? 'district_filter') ?>">
+        <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+            <i class="bi bi-geo-alt-fill text-danger me-1"></i>আমার এলাকার খবর
+        </h6>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/category/chapai-nawabganj" class="btn btn-sm btn-outline-secondary">চাঁপাইনবাবগঞ্জ</a>
+            <a href="/category/country" class="btn btn-sm btn-outline-secondary">রাজশাহী</a>
+            <a href="/category/country" class="btn btn-sm btn-outline-secondary">ঢাকা</a>
+            <a href="/category/country" class="btn btn-sm btn-outline-secondary">চট্টগ্রাম</a>
+            <a href="/category/country" class="btn btn-sm btn-outline-secondary">খুলনা</a>
+            <a href="/category/country" class="btn btn-sm btn-outline-secondary">বরিশাল</a>
+            <a href="/category/country" class="btn btn-sm btn-outline-secondary">সিলেট</a>
+            <a href="/category/country" class="btn btn-sm btn-outline-secondary">রংপুর</a>
+            <a href="/category/country" class="btn btn-sm btn-outline-secondary">ময়মনসিংহ</a>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+/**
  * Central Widget Dispatcher
  */
-function render_single_widget(array $widget, PDO $db): string {
+function render_single_widget(array $widget, PDO $db, ?array $post = null): string {
     $type = $widget['type'] ?? '';
     $status = $widget['status'] ?? 1;
 
@@ -590,7 +710,7 @@ function render_single_widget(array $widget, PDO $db): string {
         case 'hero_lead':
             return render_widget_hero_lead($widget, $db);
         case 'ad_banner':
-            return render_widget_ad_banner($widget, $db);
+            return render_widget_ad_banner($widget, $db, $post);
         case 'category_block':
             return render_widget_category_block($widget, $db);
         case 'category_grid':
@@ -603,8 +723,28 @@ function render_single_widget(array $widget, PDO $db): string {
             return render_widget_multimedia_gallery($widget, $db);
         case 'custom_html':
             return render_widget_custom_html($widget, $db);
+        case 'sidebar_tabs':
+            return render_widget_sidebar_tabs($widget, $db);
+        case 'district_filter':
+            return render_widget_district_filter($widget, $db);
         default:
             return '';
+    }
+}
+
+/**
+ * Render Dynamic News Article Sidebar
+ * Renders widgets configured for 'news_sidebar' with per-post custom ad support
+ */
+function render_news_sidebar(?array $post, PDO $db): void {
+    $layout = get_page_layout('news_sidebar', $db);
+    if ($layout && !empty($layout['widgets'])) {
+        foreach ($layout['widgets'] as $w) {
+            echo render_single_widget($w, $db, $post);
+        }
+    } else {
+        // Fallback to default sidebar file
+        include __DIR__ . '/sidebar.php';
     }
 }
 

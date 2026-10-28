@@ -71,6 +71,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $excerpt = mb_substr($plainText, 0, 180, 'UTF-8') . (mb_strlen($plainText, 'UTF-8') > 180 ? '...' : '');
         }
 
+        // Process Sidebar Custom Ad
+        $sidebarAdType = in_array($_POST['sidebar_ad_type'] ?? '', ['global', 'custom', 'code', 'none'], true) ? $_POST['sidebar_ad_type'] : 'global';
+        $sidebarAdUrl = trim($_POST['sidebar_ad_url'] ?? '');
+        $sidebarAdCode = trim($_POST['sidebar_ad_code'] ?? '');
+        $sidebarAdImage = $post['sidebar_ad_image'] ?? null;
+
+        if (!empty($_FILES['sidebar_ad_file']['name'])) {
+            $uploadedAd = upload_image_webp($_FILES['sidebar_ad_file'], 'assets/uploads/ads/');
+            if ($uploadedAd) {
+                $sidebarAdImage = $uploadedAd;
+            }
+        } elseif (!empty($_POST['sidebar_ad_image_url'])) {
+            $sidebarAdImage = trim($_POST['sidebar_ad_image_url']);
+        }
+
         try {
             $upStmt = $db->prepare("
                 UPDATE `posts` SET 
@@ -83,7 +98,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `reporter_name` = :reporter,
                     `is_lead` = :is_lead,
                     `is_breaking` = :is_breaking,
-                    `status` = :status
+                    `status` = :status,
+                    `sidebar_ad_type` = :ad_type,
+                    `sidebar_ad_image` = :ad_img,
+                    `sidebar_ad_url` = :ad_url,
+                    `sidebar_ad_code` = :ad_code
                 WHERE `id` = :id
             ");
             $upStmt->execute([
@@ -97,6 +116,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':is_lead'     => $isLead,
                 ':is_breaking' => $isBreaking,
                 ':status'      => $status,
+                ':ad_type'     => $sidebarAdType,
+                ':ad_img'      => $sidebarAdImage,
+                ':ad_url'      => $sidebarAdUrl,
+                ':ad_code'     => $sidebarAdCode,
                 ':id'          => $id,
             ]);
 
@@ -223,6 +246,57 @@ include __DIR__ . '/includes/header.php';
                             <img id="thumbPreview" src="" alt="Preview" class="img-fluid rounded border" style="max-height: 140px; display: none;">
                         </div>
 
+                        <hr class="my-3">
+
+                        <!-- Right Sidebar Ad Widget Configuration -->
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h6 class="fw-bold text-dark mb-0">
+                                <i class="bi bi-badge-ad me-1 text-warning"></i>ডান পাশের বিজ্ঞাপন (Sidebar Ad)
+                            </h6>
+                            <span class="badge bg-warning-subtle text-warning">উইজেট অপশন</span>
+                        </div>
+                        <p class="text-muted small mb-3" style="font-size:11px;">এই নির্দিষ্ট সংবাদ পেজের ডান পাশের ব্লকে আলাদা বিজ্ঞাপন দিতে পারবেন।</p>
+
+                        <?php $currAdType = $post['sidebar_ad_type'] ?? 'global'; ?>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">বিজ্ঞাপনের ধরন নির্বাচন করুন</label>
+                            <select class="form-select form-select-sm" name="sidebar_ad_type" id="sidebar_ad_type" onchange="toggleSidebarAdFields(this.value)">
+                                <option value="global" <?= ($currAdType === 'global') ? 'selected' : '' ?>>ডিফল্ট সাইডবার বিজ্ঞাপন (Global Ad)</option>
+                                <option value="custom" <?= ($currAdType === 'custom') ? 'selected' : '' ?>>এই সংবাদের জন্য নিজস্ব ব্যানার (GIF / WebP / Image)</option>
+                                <option value="code" <?= ($currAdType === 'code') ? 'selected' : '' ?>>কাস্টম অ্যাড কোড / গুগল অ্যাডসেন্স</option>
+                                <option value="none" <?= ($currAdType === 'none') ? 'selected' : '' ?>>বিজ্ঞাপন বন্ধ রাখুন (No Ad)</option>
+                            </select>
+                        </div>
+
+                        <!-- Custom Banner Upload (GIF / WebP / PNG / JPG) -->
+                        <div id="sidebar_ad_custom_box" style="display: <?= ($currAdType === 'custom') ? 'block' : 'none' ?>;" class="p-2 border rounded bg-light mb-3">
+                            <div class="mb-2">
+                                <label class="form-label small text-secondary">ব্যানার ইমেজ / অ্যানিমেটেড GIF আপলোড</label>
+                                <input type="file" class="form-control form-control-sm" name="sidebar_ad_file" accept="image/png,image/jpeg,image/webp,image/gif">
+                                <div class="form-text small" style="font-size:11px;">অ্যানিমেটেড ব্যানারসহ যে কোনো GIF, WebP, PNG বা JPG।</div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small text-secondary">অথবা ব্যানারের সরাসরি ইমেজ লিংক</label>
+                                <input type="url" class="form-control form-control-sm" name="sidebar_ad_image_url" placeholder="https://..." value="<?= e($post['sidebar_ad_image'] ?? '') ?>">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small text-secondary">ক্লিক টার্গেট লিংক (URL)</label>
+                                <input type="url" class="form-control form-control-sm" name="sidebar_ad_url" placeholder="https://..." value="<?= e($post['sidebar_ad_url'] ?? '') ?>">
+                            </div>
+                            <?php if (!empty($post['sidebar_ad_image'])): ?>
+                                <div class="mt-2 text-center p-2 bg-white rounded border">
+                                    <div class="small text-muted mb-1">বর্তমান ব্যানার:</div>
+                                    <img src="<?= e($post['sidebar_ad_image']) ?>" alt="Banner" class="img-fluid rounded border" style="max-height: 80px;">
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Custom Ad Code Field -->
+                        <div id="sidebar_ad_code_box" style="display: <?= ($currAdType === 'code') ? 'block' : 'none' ?>;" class="p-2 border rounded bg-light mb-3">
+                            <label class="form-label small text-secondary">HTML / Script অ্যাড কোড</label>
+                            <textarea class="form-control form-control-sm font-monospace" name="sidebar_ad_code" rows="3" placeholder="<script>...</script>"><?= e($post['sidebar_ad_code'] ?? '') ?></textarea>
+                        </div>
+
                         <button type="submit" class="btn btn-warning text-white fw-bold w-100 py-2 shadow-sm">
                             <i class="bi bi-save me-1"></i> পরিবর্তন সংরক্ষণ করুন
                         </button>
@@ -232,5 +306,12 @@ include __DIR__ . '/includes/header.php';
         </form>
     </div>
 </div>
+
+<script>
+function toggleSidebarAdFields(val) {
+    document.getElementById('sidebar_ad_custom_box').style.display = (val === 'custom') ? 'block' : 'none';
+    document.getElementById('sidebar_ad_code_box').style.display = (val === 'code') ? 'block' : 'none';
+}
+</script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

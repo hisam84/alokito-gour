@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/helpers.php';
+require_once __DIR__ . '/includes/widget_renderer.php';
 
 $db = get_db();
 $id = (int)($_GET['id'] ?? 0);
@@ -170,9 +171,9 @@ include __DIR__ . '/includes/ticker.php';
             <?php endif; ?>
         </div>
 
-        <!-- Sidebar Area (4 Cols) -->
+        <!-- Sidebar Area (4 Cols) - Powered by Widget Builder & Article Ad Settings -->
         <div class="col-lg-4">
-            <?php include __DIR__ . '/includes/sidebar.php'; ?>
+            <?php render_news_sidebar($post, $db); ?>
         </div>
     </div>
 </div>

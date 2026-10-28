@@ -271,7 +271,7 @@ include __DIR__ . '/includes/header.php';
                 <div class="col-lg-7 col-md-6 text-md-end">
                     <div class="d-flex align-items-center justify-content-md-end gap-2 flex-wrap">
                         <?php 
-                        $previewUrl = ($currentSlug === 'home') ? '/' : '/page/' . urlencode($currentSlug);
+                        $previewUrl = ($currentSlug === 'home') ? '/' : (($currentSlug === 'news_sidebar') ? '/news/1' : '/page/' . urlencode($currentSlug));
                         ?>
                         <a href="<?= e($previewUrl) ?>" target="_blank" class="btn btn-outline-secondary btn-sm">
                             <i class="bi bi-box-arrow-up-right me-1"></i>লাইভ দেখুন
@@ -423,6 +423,28 @@ include __DIR__ . '/includes/header.php';
                             <div>
                                 <div class="fw-bold small text-dark">কাস্টম এইচটিএমএল / নোটিশ (Embed)</div>
                                 <div class="text-muted" style="font-size: 11px;">ইউটিউব ভিডিও, বিশেষ নোটিশ বা নিজস্ব কাস্টম কোড</div>
+                            </div>
+                        </div>
+
+                        <!-- 9. Sidebar Tabs -->
+                        <div class="widget-palette-item" onclick="addWidget('sidebar_tabs');">
+                            <div class="widget-palette-icon bg-info bg-opacity-10 text-info">
+                                <i class="bi bi-clock-history"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold small text-dark">সর্বশেষ ও জনপ্রিয় সংবাদ ট্যাব</div>
+                                <div class="text-muted" style="font-size: 11px;">সাইডবারের জন্য সর্বশেষ ও সর্বাধিক পঠিত সংবাদের ট্যাব</div>
+                            </div>
+                        </div>
+
+                        <!-- 10. District Filter -->
+                        <div class="widget-palette-item" onclick="addWidget('district_filter');">
+                            <div class="widget-palette-icon bg-danger bg-opacity-10 text-danger">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold small text-dark">আমার এলাকার খবর (জেলা ফিল্টার)</div>
+                                <div class="text-muted" style="font-size: 11px;">চাঁপাইনবাবগঞ্জ, রাজশাহী, ঢাকাসহ জেলাভিত্তিক বাটন গ্রিড</div>
                             </div>
                         </div>
                     </div>
@@ -590,6 +612,22 @@ const WIDGET_META = {
         defaultContainer: 'main',
         defaultTitle: 'বিশেষ নোটিশ / কাস্টম উইজেট',
         defaultSettings: { content: '<div class="p-3 bg-light border rounded">কাস্টম নোটিশ বা এম্বেড কোড এখানে দিন...</div>' }
+    },
+    sidebar_tabs: {
+        label: 'সর্বশেষ ও জনপ্রিয় সংবাদ ট্যাব',
+        icon: 'bi-clock-history',
+        colorClass: 'type-sidebar_tabs',
+        defaultContainer: 'main',
+        defaultTitle: 'সর্বশেষ ও জনপ্রিয় সংবাদ ট্যাব',
+        defaultSettings: { limit: 7 }
+    },
+    district_filter: {
+        label: 'আমার এলাকার খবর (জেলা ফিল্টার)',
+        icon: 'bi-geo-alt-fill',
+        colorClass: 'type-district_filter',
+        defaultContainer: 'main',
+        defaultTitle: 'আমার এলাকার খবর (জেলা ফিল্টার)',
+        defaultSettings: {}
     }
 };
 
@@ -689,6 +727,10 @@ function describeWidget(w) {
             return `গ্যালারি আইটেম (${s.limit || 4} টি)`;
         case 'custom_html':
             return `কাস্টম এইচটিএমএল কোড`;
+        case 'sidebar_tabs':
+            return `সর্বশেষ ও জনপ্রিয় ট্যাব (${s.limit || 7} টি)`;
+        case 'district_filter':
+            return `জেলা ফিল্টার বাটন গ্রিড`;
         default:
             return '';
     }
@@ -854,7 +896,8 @@ function editWidget(idx) {
         const positions = [
             { key: 'after_lead', label: 'হোম লিড পরবর্তী ব্যানার (৯৭০x৯০ বা রেসপন্সিভ)' },
             { key: 'header_right', label: 'হেডার ব্যানার (৭২৮x৯০)' },
-            { key: 'sidebar', label: 'সাইডবার ব্যানার' },
+            { key: 'sidebar', label: 'ডান পাশের সাইডবার মূল ব্যানার (Sidebar Top)' },
+            { key: 'sidebar_bottom', label: 'ডান পাশের সাইডবার নিচের ব্যানার (Sidebar Bottom)' },
             { key: 'inside_article', label: 'সংবাদের ভেতরের ব্যানার' }
         ];
 
@@ -872,6 +915,13 @@ function editWidget(idx) {
             <div class="mb-3">
                 <label class="form-label fw-bold small">অথবা কাস্টম অ্যাড কোড (ঐচ্ছিক)</label>
                 <textarea class="form-control font-monospace small" id="edit_ad_custom_code" rows="3" placeholder="<div ...> বা গুগল অ্যাডসেন্স কোড">${escapeHtml(s.custom_code || '')}</textarea>
+            </div>
+        `;
+    } else if (w.type === 'sidebar_tabs') {
+        fieldsHtml += `
+            <div class="mb-3">
+                <label class="form-label fw-bold small">সংবাদের সংখ্যা (প্রতি ট্যাবে)</label>
+                <input type="number" class="form-control form-control-sm" id="edit_limit" value="${s.limit || 7}" min="3" max="15" style="max-width: 150px;">
             </div>
         `;
     } else if (w.type === 'hero_lead') {
@@ -940,6 +990,8 @@ function applyWidgetSettings() {
         w.settings.sub_leads = parseInt(document.getElementById('edit_sub_leads').value, 10) || 3;
     } else if (w.type === 'custom_html') {
         w.settings.content = document.getElementById('edit_html_content').value;
+    } else if (w.type === 'sidebar_tabs') {
+        w.settings.limit = parseInt(document.getElementById('edit_limit').value, 10) || 7;
     } else if (w.type === 'multimedia_gallery') {
         w.settings.limit = parseInt(document.getElementById('edit_limit').value, 10) || 4;
     }

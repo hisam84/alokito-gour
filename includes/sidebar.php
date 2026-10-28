@@ -28,7 +28,26 @@ $popularPosts = $sideDb->query("
 ?>
 
 <!-- Top Sidebar Advertisement Board -->
-<?= render_ad('sidebar') ?>
+<?php 
+if (isset($post['sidebar_ad_type'])) {
+    if ($post['sidebar_ad_type'] === 'none') {
+        // No ad
+    } elseif ($post['sidebar_ad_type'] === 'code' && !empty($post['sidebar_ad_code'])) {
+        echo '<div class="ad-container ad-sidebar mb-3 text-center">' . $post['sidebar_ad_code'] . '</div>';
+    } elseif ($post['sidebar_ad_type'] === 'custom' && !empty($post['sidebar_ad_image'])) {
+        $target = !empty($post['sidebar_ad_url']) ? e($post['sidebar_ad_url']) : '#';
+        echo '<div class="ad-container ad-sidebar mb-3 text-center">
+            <a href="' . $target . '" target="_blank" rel="noopener" class="d-block w-100">
+                <img src="' . e($post['sidebar_ad_image']) . '" alt="Advertisement" class="img-fluid rounded border shadow-sm w-100" style="width: 100%; height: auto; display: block;">
+            </a>
+        </div>';
+    } else {
+        echo render_ad('sidebar');
+    }
+} else {
+    echo render_ad('sidebar');
+}
+?>
 
 <!-- Tabbed Widget: Latest / Popular -->
 <div class="sidebar-widget">

@@ -263,6 +263,8 @@ body {
 .widget-card.type-full_width_split { border-left-color: #10b981; }
 .widget-card.type-multimedia_gallery { border-left-color: #1e293b; }
 .widget-card.type-custom_html { border-left-color: #64748b; }
+.widget-card.type-sidebar_tabs { border-left-color: #0284c7; }
+.widget-card.type-district_filter { border-left-color: #dc2626; }
 
 .widget-card.is-hidden {
     opacity: 0.55;
