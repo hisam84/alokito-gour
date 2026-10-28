@@ -29,20 +29,23 @@ An authentic, high-performance, and responsive clone of the popular Bengali news
 ### Prerequisites
 - PHP 8.2+ installed with `pdo_sqlite`, `sqlite3`, `gd`, `mbstring`, `fileinfo`, `curl` extensions enabled.
 
-### 1-Click Run
-Double-click `run-server.bat` or execute in terminal:
+### 1-Click Run (যেকোনো কম্পিউটারে ১-ক্লিকে রান করুন)
+যেকোনো কম্পিউটারে প্রজেক্ট ফোল্ডারে গিয়ে **`run.bat`** (অথবা `run-server.bat`) ফাইলে ডাবল-ক্লিক করলেই লোকাল সার্ভার চালু হয়ে যাবে!
 
-```bash
-php -c php.ini -S 0.0.0.0:8000 router.php
-```
+- **উইন্ডোজ (Windows)**: **`run.bat`** অথবা **`run-server.bat`**-এ ডাবল ক্লিক করুন।
+  - এটি স্বয়ংক্রিয়ভাবে আপনার কম্পিউটারে PHP (XAMPP, Laragon, WAMP, Program Files ইত্যাদি) খুঁজে নেয়।
+  - যদি কোনো কম্পিউটারে PHP না থাকে, তবে স্ক্রিপ্ট থেকেই ১-ক্লিকে পোর্টেবল PHP ডাউনলোড ও সেটআপ করার অপশন পাবেন।
+  - পোর্ট ব্যস্ত থাকলে স্বয়ংক্রিয়ভাবে পরবর্তী খালি পোর্ট বেছে নেয় (৮০০০, ৮০৮০ ইত্যাদি)।
+  - সার্ভার চালু হওয়ার সাথে সাথে আপনার ব্রাউজারে স্বয়ংক্রিয়ভাবে ওয়েবসাইট ওপেন করে দেয়।
+- **ম্যাক / লিনাক্স (macOS / Linux)**: টার্মিনালে `./run.sh` রান করুন।
 
-Then open in your browser:
-- **Public Portal**: [http://localhost:8000](http://localhost:8000)
-- **Admin CMS**: [http://localhost:8000/admin/](http://localhost:8000/admin/)
+সার্ভার চালু হলে ব্রাউজারে দেখতে পাবেন:
+- **পাবলিক পোর্টাল (Web Portal)**: [http://localhost:8000](http://localhost:8000)
+- **এডমিন প্যানেল (Admin Panel)**: [http://localhost:8000/admin/login.php](http://localhost:8000/admin/login.php)
 
-### Default Admin Credentials
+### Default Admin Credentials (ডিফল্ট এডমিন লগইন)
 - **Email**: `admin@alokitogour.com`
-- **Password**: `Admin@123456`
+- **Password**: `admin123`
 
 ---
 

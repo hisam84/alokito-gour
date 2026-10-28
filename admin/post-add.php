@@ -125,8 +125,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':upazila'     => $upazila ?: null,
             ]);
 
-            set_flash('success', 'Article published and saved successfully!');
-            header('Location: post-list.php');
+            $newPostId = (int)$db->lastInsertId();
+            set_flash('success', 'Article published successfully! You can now preview, customize and download the Facebook photo card below.');
+            header('Location: photo-card.php?post_id=' . $newPostId);
             exit;
         } catch (Exception $e) {
             $error = 'Database error: ' . $e->getMessage();

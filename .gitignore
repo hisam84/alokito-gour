@@ -2,6 +2,9 @@
 scratch/
 *.log
 *.tmp
+*.bak
+php-temp.zip
+php/
 .DS_Store
 Thumbs.db
 

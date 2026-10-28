@@ -41,6 +41,12 @@ $currentScript = basename($_SERVER['PHP_SELF']);
             </a>
         </li>
         <li>
+            <a href="photo-card.php" class="<?= $currentScript === 'photo-card.php' ? 'active' : '' ?>" title="Facebook Photo Card">
+                <i class="bi bi-card-image text-info"></i>
+                <span>Photo Card Generator</span>
+            </a>
+        </li>
+        <li>
             <a href="categories.php" class="<?= $currentScript === 'categories.php' ? 'active' : '' ?>" title="Categories">
                 <i class="bi bi-tags"></i>
                 <span>Categories</span>

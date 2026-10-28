@@ -160,9 +160,14 @@ include __DIR__ . '/includes/header.php';
                 <h4 class="fw-bold mb-1 text-dark">Edit Article</h4>
                 <p class="text-muted small mb-0">ID: #<?= (int)$post['id'] ?> &bull; <?= e($post['title']) ?></p>
             </div>
-            <a href="post-list.php" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i> Back to Posts List
-            </a>
+            <div class="d-flex gap-2">
+                <a href="photo-card.php?post_id=<?= (int)$post['id'] ?>" class="btn btn-outline-info btn-sm">
+                    <i class="bi bi-card-image me-1"></i> Photo Card
+                </a>
+                <a href="post-list.php" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Posts List
+                </a>
+            </div>
         </div>
 
         <?php if (!empty($error)): ?>

@@ -1,19 +1,11 @@
 @echo off
-title Alokito Gour Local Development Server
-echo ========================================================
-echo   Alokito Gour News Portal - Local Development Server
-echo ========================================================
-echo.
-echo Local Database: database\alokito_gour.sqlite [Active]
-echo Web Portal:     http://localhost:8000
-echo Admin Panel:    http://localhost:8000/admin/login.php
-echo.
-echo Admin Login:
-echo   Email:    admin@alokitogour.com
-echo   Password: admin123
-echo.
-echo Starting server... Press Ctrl+C to stop.
-echo.
+title Alokito Gour Local Server
+cd /d "%~dp0"
 
-php -c php.ini -S localhost:8000 router.php
-pause
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\run_server.ps1"
+
+if %errorlevel% neq 0 (
+    echo.
+    echo [!] Server exited or encountered an error.
+    pause
+)

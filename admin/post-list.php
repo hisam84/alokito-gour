@@ -188,6 +188,9 @@ include __DIR__ . '/includes/header.php';
                                 <a href="../single.php?id=<?= (int)$post['id'] ?>" target="_blank" class="btn btn-sm btn-light border text-secondary" title="View Article">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                <a href="photo-card.php?post_id=<?= (int)$post['id'] ?>" class="btn btn-sm btn-light border text-info" title="Generate Facebook Photo Card">
+                                    <i class="bi bi-card-image"></i>
+                                </a>
                                 <a href="post-edit.php?id=<?= (int)$post['id'] ?>" class="btn btn-sm btn-light border text-primary" title="Edit Article">
                                     <i class="bi bi-pencil"></i>
                                 </a>
