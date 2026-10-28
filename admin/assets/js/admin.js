@@ -3,15 +3,32 @@
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Mobile Sidebar Toggle
+    // Sidebar Toggle (Desktop Collapse + Mobile Drawer)
     const toggleBtn = document.getElementById('sidebarToggle');
     const sidebar = document.querySelector('.admin-sidebar');
     const backdrop = document.getElementById('sidebarBackdrop');
 
-    if (toggleBtn && sidebar) {
-        toggleBtn.addEventListener('click', function () {
-            sidebar.classList.toggle('show');
-            if (backdrop) backdrop.classList.toggle('show');
+    function isDesktop() {
+        return window.innerWidth >= 992;
+    }
+
+    // Sync state on load
+    if (isDesktop() && localStorage.getItem('admin_sidebar_collapsed') === 'true') {
+        document.documentElement.classList.add('sidebar-collapsed');
+        document.body.classList.add('sidebar-collapsed');
+    }
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (isDesktop()) {
+                const isCollapsed = document.documentElement.classList.toggle('sidebar-collapsed');
+                document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+                localStorage.setItem('admin_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+            } else {
+                if (sidebar) sidebar.classList.toggle('show');
+                if (backdrop) backdrop.classList.toggle('show');
+            }
         });
     }
 
@@ -35,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const deleteButtons = document.querySelectorAll('.btn-confirm-delete');
     deleteButtons.forEach(function (btn) {
         btn.addEventListener('click', function (e) {
-            if (!confirm('আপনি কি নিশ্চিত যে এটি মুছে ফেলতে চান? এটি পুনরুদ্ধার করা যাবে না।')) {
+            if (!confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
                 e.preventDefault();
             }
         });

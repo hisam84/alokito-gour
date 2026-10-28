@@ -25,7 +25,7 @@ if (!empty($query)) {
     $countStmt = $db->prepare("
         SELECT COUNT(*) 
         FROM `posts` 
-        WHERE `status` = 'published' AND (`title` LIKE :q OR `excerpt` LIKE :q OR `content` LIKE :q)
+        WHERE `status` = 'published' AND (`title` LIKE :q OR `excerpt` LIKE :q OR `content` LIKE :q OR `keywords` LIKE :q)
     ");
     $countStmt->execute([':q' => '%' . $query . '%']);
     $totalPosts = (int)$countStmt->fetchColumn();
@@ -36,7 +36,7 @@ if (!empty($query)) {
         SELECT p.*, c.name AS category_name, c.slug AS category_slug 
         FROM `posts` p 
         LEFT JOIN `categories` c ON p.category_id = c.id 
-        WHERE p.status = 'published' AND (p.title LIKE :q OR p.excerpt LIKE :q OR p.content LIKE :q)
+        WHERE p.status = 'published' AND (p.title LIKE :q OR p.excerpt LIKE :q OR p.content LIKE :q OR p.keywords LIKE :q)
         ORDER BY p.id DESC 
         LIMIT :offset, :limit
     ");

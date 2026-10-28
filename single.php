@@ -43,6 +43,7 @@ $upStmt->execute([':id' => $id]);
 $metaTitle = $post['title'];
 $metaDescription = $post['excerpt'];
 $metaImage = $post['thumbnail'];
+$metaKeywords = !empty($post['keywords']) ? $post['keywords'] : '';
 
 // Fetch Related News in Same Category (4 items)
 $relStmt = $db->prepare("
@@ -72,6 +73,11 @@ include __DIR__ . '/includes/ticker.php';
             <?php if (!empty($post['category_name'])): ?>
                 <li class="breadcrumb-item"><a href="/category/<?= e($post['category_slug']) ?>" class="text-muted"><?= e($post['category_name']) ?></a></li>
             <?php endif; ?>
+            <?php if (!empty($post['district'])): ?>
+                <li class="breadcrumb-item text-muted">
+                    <i class="bi bi-geo-alt-fill text-danger me-1"></i><?= e($post['district']) ?><?= !empty($post['upazila']) ? ' › ' . e($post['upazila']) : '' ?>
+                </li>
+            <?php endif; ?>
             <li class="breadcrumb-item active text-truncate" aria-current="page" style="max-width: 300px;"><?= e($post['title']) ?></li>
         </ol>
     </nav>
@@ -91,6 +97,12 @@ include __DIR__ . '/includes/ticker.php';
                             <div>
                                 <span class="fw-bold text-dark d-block lh-1"><?= e($post['reporter_name'] ?: 'নিজস্ব প্রতিবেদক') ?></span>
                                 <span class="small text-muted" style="font-size:11px;">প্রকাশিত: <?= bn_date($post['created_at'], true) ?></span>
+                                <?php if (!empty($post['division']) || !empty($post['district']) || !empty($post['upazila'])): ?>
+                                    <div class="mt-1 d-flex align-items-center gap-1 text-secondary" style="font-size:12px;">
+                                        <i class="bi bi-geo-alt-fill text-danger"></i>
+                                        <span><?= e(implode(' › ', array_filter([$post['division'] ?? '', $post['district'] ?? '', $post['upazila'] ?? '']))) ?></span>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
 
@@ -132,6 +144,25 @@ include __DIR__ . '/includes/ticker.php';
 
                 <!-- Inside Article Advertisement Slot -->
                 <?= render_ad('inside_article') ?>
+
+                <!-- Keywords / Tags -->
+                <?php if (!empty($post['keywords'])): 
+                    $keywordsArray = array_filter(array_map('trim', explode(',', $post['keywords'])));
+                    if (!empty($keywordsArray)):
+                ?>
+                    <div class="article-keywords my-3 p-3 bg-light rounded-3 border">
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                            <span class="fw-bold text-secondary small d-flex align-items-center me-1">
+                                <i class="bi bi-tags-fill text-warning me-1"></i>বিষয় / কিওয়ার্ড:
+                            </span>
+                            <?php foreach ($keywordsArray as $kw): ?>
+                                <a href="/search?q=<?= urlencode($kw) ?>" class="badge bg-white text-dark border text-decoration-none px-2 py-1 shadow-sm" style="font-size: 13px; font-weight: 500;">
+                                    #<?= e($kw) ?>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; endif; ?>
 
                 <!-- Bottom Meta (Views & Category) -->
                 <div class="d-flex align-items-center justify-content-between pt-3 mt-4 border-top text-muted small">

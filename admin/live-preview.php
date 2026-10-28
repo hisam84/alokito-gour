@@ -45,7 +45,7 @@ if ($slug === 'news_sidebar') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>রিয়েল-টাইম প্রিভিউ - <?= e($slug) ?> | আলোকিত গৌড়</title>
+    <title>Live Preview - <?= e($slug) ?> | Alokito Gour</title>
 
     <!-- Bengali Font: SolaimanLipi -->
     <link href="https://fonts.maateen.me/solaiman-lipi/font.css" rel="stylesheet">
@@ -111,8 +111,8 @@ if ($slug === 'news_sidebar') {
 <!-- Discreet Preview Status Ribbon -->
 <div class="preview-watermark">
     <i class="bi bi-eye-fill"></i>
-    <span>ওয়ার্ডপ্রেস-স্টাইল লাইভ প্রিভিউ &bull; পেজ: <?= e($slug) ?></span>
-    <span class="badge bg-warning text-dark ms-2" style="font-size: 9px;">রিয়েল-টাইম সিঙ্ক</span>
+    <span>WordPress-Style Live Preview &bull; Page: <?= e($slug) ?></span>
+    <span class="badge bg-warning text-dark ms-2" style="font-size: 9px;">Real-Time Sync</span>
 </div>
 
 <?php 
@@ -153,7 +153,7 @@ include dirname(__DIR__) . '/includes/ticker.php';
             <!-- Live Sidebar Being Customized (4 Cols) -->
             <div class="col-lg-4">
                 <div class="p-2 border border-warning rounded bg-light mb-2 text-center small text-warning fw-bold">
-                    <i class="bi bi-arrow-down-circle me-1"></i>লাইভ সাইডবার ব্লক
+                    <i class="bi bi-arrow-down-circle me-1"></i>Live Sidebar Blocks
                 </div>
                 <?php render_news_sidebar($samplePost, $db, $customWidgets); ?>
             </div>

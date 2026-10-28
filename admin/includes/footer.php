@@ -25,7 +25,7 @@ declare(strict_types=1);
     $(document).ready(function() {
         if ($('#summernote').length) {
             $('#summernote').summernote({
-                placeholder: 'এখানে সংবাদের বিস্তারিত বিবরণ লিখুন...',
+                placeholder: 'Write the full news content here...',
                 tabsize: 2,
                 height: 350,
                 toolbar: [

@@ -97,7 +97,7 @@ function slugify(string $text): string {
 function get_ad(string $position): ?array {
     try {
         $db = get_db();
-        $stmt = $db->prepare("SELECT * FROM `advertisements` WHERE `position` = :pos AND `status` = 1 LIMIT 1");
+        $stmt = $db->prepare("SELECT * FROM `advertisements` WHERE `position` = :pos AND `status` = 1 ORDER BY `id` DESC LIMIT 1");
         $stmt->execute([':pos' => $position]);
         return $stmt->fetch() ?: null;
     } catch (Exception $e) {

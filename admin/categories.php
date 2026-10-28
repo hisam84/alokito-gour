@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/auth_guard.php';
 
-$pageTitle = 'ক্যাটাগরি ব্যবস্থাপনা | আলোকিত গৌড়';
+$pageTitle = 'Category Management | Alokito Gour';
 $db = get_db();
 $error = '';
 $editCategory = null;
@@ -20,9 +20,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
         $delId = (int)$_GET['id'];
         $delStmt = $db->prepare("DELETE FROM `categories` WHERE `id` = :id");
         $delStmt->execute([':id' => $delId]);
-        set_flash('success', 'ক্যাটাগরি সফলভাবে মুছে ফেলা হয়েছে।');
+        set_flash('success', 'Category deleted successfully.');
     } else {
-        set_flash('danger', 'নিরাপত্তা টোকেন সঠিক নয়!');
+        set_flash('danger', 'Security token is invalid!');
     }
     header('Location: categories.php');
     exit;
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $categoryId = (int)($_POST['category_id'] ?? 0);
 
     if (empty($name)) {
-        $error = 'ক্যাটাগরির নাম প্রদান করা আবশ্যক।';
+        $error = 'Category name is required.';
     } else {
         if (empty($slug)) {
             $slug = slugify($name);
@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':menu' => $showInMenu,
                     ':id'   => $categoryId
                 ]);
-                set_flash('success', 'ক্যাটাগরি সফলভাবে আপডেট করা হয়েছে।');
+                set_flash('success', 'Category updated successfully.');
             } else {
                 // Insert
                 $insStmt = $db->prepare("
@@ -83,12 +83,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':ord'  => $orderIndex,
                     ':menu' => $showInMenu
                 ]);
-                set_flash('success', 'নতুন ক্যাটাগরি সফলভাবে তৈরি করা হয়েছে।');
+                set_flash('success', 'New category created successfully.');
             }
             header('Location: categories.php');
             exit;
         } catch (Exception $e) {
-            $error = 'ত্রুটি: ক্যাটাগরি বা স্ল্যাগটি ইতোমধ্যে ব্যবহৃত হয়ে থাকতে পারে।';
+            $error = 'Error: Category name or slug might already exist.';
         }
     }
 }
@@ -107,8 +107,8 @@ include __DIR__ . '/includes/header.php';
 
 <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
-        <h4 class="fw-bold mb-1 text-dark">ক্যাটাগরি ব্যবস্থাপনা</h4>
-        <p class="text-muted small mb-0">পোর্টালের বিষয়ভিত্তিক ক্যাটাগরি এবং মেনু নেভিগেশন ক্রম নিয়ন্ত্রণ করুন</p>
+        <h4 class="fw-bold mb-1 text-dark">Category Management</h4>
+        <p class="text-muted small mb-0">Manage portal news categories and main navigation menu order</p>
     </div>
 </div>
 
@@ -123,7 +123,7 @@ include __DIR__ . '/includes/header.php';
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm p-3">
             <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
-                <?= $editCategory ? 'ক্যাটাগরি সম্পাদন করুন' : 'নতুন ক্যাটাগরি যোগ করুন' ?>
+                <?= $editCategory ? 'Edit Category' : 'Add New Category' ?>
             </h6>
 
             <form method="POST" action="categories.php">
@@ -133,33 +133,33 @@ include __DIR__ . '/includes/header.php';
                 <?php endif; ?>
 
                 <div class="mb-3">
-                    <label for="name" class="form-label small fw-bold text-secondary">ক্যাটাগরির নাম <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="name" name="name" value="<?= e($editCategory['name'] ?? '') ?>" placeholder="যেমন: চাঁপাইনবাবগঞ্জ বা রাজনীতি" required>
+                    <label for="name" class="form-label small fw-bold text-secondary">Category Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="name" name="name" value="<?= e($editCategory['name'] ?? '') ?>" placeholder="e.g. Politics, Sports, National" required>
                 </div>
 
                 <div class="mb-3">
-                    <label for="slug" class="form-label small fw-bold text-secondary">ইউআরএল স্ল্যাগ (Slug)</label>
-                    <input type="text" class="form-control" id="slug" name="slug" value="<?= e($editCategory['slug'] ?? '') ?>" placeholder="খালি রাখলে স্বয়ংক্রিয় তৈরি হবে">
-                    <div class="form-text small" style="font-size:11px;">যেমন: /category/chapai-nawabganj</div>
+                    <label for="slug" class="form-label small fw-bold text-secondary">URL Slug</label>
+                    <input type="text" class="form-control" id="slug" name="slug" value="<?= e($editCategory['slug'] ?? '') ?>" placeholder="Leave empty to auto-generate">
+                    <div class="form-text small" style="font-size:11px;">e.g., /category/politics</div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="order_index" class="form-label small fw-bold text-secondary">প্রদর্শন ক্রম (Order Index)</label>
+                    <label for="order_index" class="form-label small fw-bold text-secondary">Display Order (Order Index)</label>
                     <input type="number" class="form-control" id="order_index" name="order_index" value="<?= (int)($editCategory['order_index'] ?? 0) ?>">
-                    <div class="form-text small" style="font-size:11px;">ছোট সংখ্যাগুলো মেনুতে আগে প্রদর্শিত হবে</div>
+                    <div class="form-text small" style="font-size:11px;">Smaller numbers appear earlier in the menu</div>
                 </div>
 
                 <div class="form-check form-switch mb-3">
                     <input class="form-check-input" type="checkbox" role="switch" id="show_in_menu" name="show_in_menu" value="1" <?= (!$editCategory || !empty($editCategory['show_in_menu'])) ? 'checked' : '' ?>>
-                    <label class="form-check-label small fw-bold text-dark" for="show_in_menu">প্রধান মেনুবারে প্রদর্শন করুন</label>
+                    <label class="form-check-label small fw-bold text-dark" for="show_in_menu">Display in Main Menu</label>
                 </div>
 
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-warning text-white fw-bold w-100">
-                        <?= $editCategory ? 'আপডেট করুন' : 'ক্যাটাগরি সংরক্ষণ' ?>
+                        <?= $editCategory ? 'Update Category' : 'Save Category' ?>
                     </button>
                     <?php if ($editCategory): ?>
-                        <a href="categories.php" class="btn btn-outline-secondary">বাতিল</a>
+                        <a href="categories.php" class="btn btn-outline-secondary">Cancel</a>
                     <?php endif; ?>
                 </div>
             </form>
@@ -173,36 +173,36 @@ include __DIR__ . '/includes/header.php';
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th style="width: 50px;">ক্রম</th>
-                            <th>ক্যাটাগরির নাম</th>
-                            <th>স্ল্যাগ</th>
-                            <th>সংবাদ সংখ্যা</th>
-                            <th>মেনু স্ট্যাটাস</th>
-                            <th class="text-end" style="width: 120px;">অ্যাকশন</th>
+                            <th style="width: 60px;">Order</th>
+                            <th>Category Name</th>
+                            <th>Slug</th>
+                            <th>Posts Count</th>
+                            <th>Menu Status</th>
+                            <th class="text-end" style="width: 120px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (!empty($categories)): ?>
                             <?php foreach ($categories as $cat): ?>
                                 <tr>
-                                    <td><span class="badge bg-light text-dark border"><?= bn_number($cat['order_index']) ?></span></td>
+                                    <td><span class="badge bg-light text-dark border"><?= (int)$cat['order_index'] ?></span></td>
                                     <td>
                                         <span class="fw-bold text-dark"><?= e($cat['name']) ?></span>
                                     </td>
                                     <td><code class="small text-muted">/category/<?= e($cat['slug']) ?></code></td>
-                                    <td><span class="badge bg-secondary bg-opacity-10 text-secondary"><?= bn_number($cat['post_count']) ?> টি</span></td>
+                                    <td><span class="badge bg-secondary bg-opacity-10 text-secondary"><?= (int)$cat['post_count'] ?></span></td>
                                     <td>
                                         <?php if ($cat['show_in_menu']): ?>
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle">মেনুতে দৃশ্যমান</span>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle">Visible in Menu</span>
                                         <?php else: ?>
-                                            <span class="badge bg-light text-muted border">লুকায়িত</span>
+                                            <span class="badge bg-light text-muted border">Hidden</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-end">
-                                        <a href="categories.php?edit=<?= (int)$cat['id'] ?>" class="btn btn-sm btn-light border text-primary" title="সম্পাদনা">
+                                        <a href="categories.php?edit=<?= (int)$cat['id'] ?>" class="btn btn-sm btn-light border text-primary" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <a href="categories.php?action=delete&id=<?= (int)$cat['id'] ?>&csrf_token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-light border text-danger btn-confirm-delete" title="মুছে ফেলুন">
+                                        <a href="categories.php?action=delete&id=<?= (int)$cat['id'] ?>&csrf_token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-light border text-danger btn-confirm-delete" title="Delete">
                                             <i class="bi bi-trash"></i>
                                         </a>
                                     </td>
@@ -210,7 +210,7 @@ include __DIR__ . '/includes/header.php';
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">কোনো ক্যাটাগরি তৈরি করা হয়নি।</td>
+                                <td colspan="6" class="text-center py-4 text-muted">No categories created yet.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>

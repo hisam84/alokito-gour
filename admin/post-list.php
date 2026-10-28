@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/auth_guard.php';
 
-$pageTitle = 'সকল সংবাদ তালিকা | আলোকিত গৌড়';
+$pageTitle = 'All Posts List | Alokito Gour';
 $db = get_db();
 
 // Handle Delete Request
@@ -18,9 +18,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
         $deleteId = (int)$_GET['id'];
         $delStmt = $db->prepare("DELETE FROM `posts` WHERE `id` = :id");
         $delStmt->execute([':id' => $deleteId]);
-        set_flash('success', 'সংবাদটি সফলভাবে মুছে ফেলা হয়েছে।');
+        set_flash('success', 'Article deleted successfully.');
     } else {
-        set_flash('danger', 'নিরাপত্তা টোকেন সঠিক নয়!');
+        set_flash('danger', 'Security token mismatch. Please try again.');
     }
     header('Location: post-list.php');
     exit;
@@ -42,7 +42,7 @@ if ($categoryId > 0) {
 }
 
 if (!empty($search)) {
-    $whereClauses[] = "(p.title LIKE :search OR p.excerpt LIKE :search OR p.reporter_name LIKE :search)";
+    $whereClauses[] = "(p.title LIKE :search OR p.excerpt LIKE :search OR p.reporter_name LIKE :search OR p.keywords LIKE :search OR p.district LIKE :search OR p.upazila LIKE :search)";
     $params[':search'] = '%' . $search . '%';
 }
 
@@ -80,12 +80,12 @@ include __DIR__ . '/includes/header.php';
 
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
     <div>
-        <h4 class="fw-bold mb-1 text-dark">সকল সংবাদ তালিকা</h4>
-        <p class="text-muted small mb-0">মোট সংবাদ: <?= bn_number($totalRows) ?> টি</p>
+        <h4 class="fw-bold mb-1 text-dark">All Posts List</h4>
+        <p class="text-muted small mb-0">Total Articles: <?= number_format($totalRows) ?></p>
     </div>
     <a href="post-add.php" class="btn btn-warning text-white fw-medium shadow-sm d-flex align-items-center gap-1">
         <i class="bi bi-pencil-square"></i>
-        <span>নতুন সংবাদ যোগ করুন</span>
+        <span>Add New Article</span>
     </a>
 </div>
 
@@ -96,13 +96,13 @@ include __DIR__ . '/includes/header.php';
             <div class="col-md-5">
                 <div class="input-group">
                     <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control border-start-0" name="q" placeholder="শিরোনাম বা প্রতিবেদকের নাম দিয়ে খুঁজুন..." value="<?= e($search) ?>">
+                    <input type="text" class="form-control border-start-0" name="q" placeholder="Search by title, reporter, or keywords..." value="<?= e($search) ?>">
                 </div>
             </div>
 
             <div class="col-md-4">
                 <select class="form-select" name="category_id">
-                    <option value="0">সকল ক্যাটাগরি</option>
+                    <option value="0">All Categories</option>
                     <?php foreach ($categories as $cat): ?>
                         <option value="<?= (int)$cat['id'] ?>" <?= ($categoryId === (int)$cat['id']) ? 'selected' : '' ?>>
                             <?= e($cat['name']) ?>
@@ -112,9 +112,9 @@ include __DIR__ . '/includes/header.php';
             </div>
 
             <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-secondary w-100">ফিল্টার করুন</button>
+                <button type="submit" class="btn btn-secondary w-100">Filter</button>
                 <?php if ($categoryId > 0 || !empty($search)): ?>
-                    <a href="post-list.php" class="btn btn-outline-danger" title="রিসেট"><i class="bi bi-x-circle"></i></a>
+                    <a href="post-list.php" class="btn btn-outline-danger" title="Reset Filters"><i class="bi bi-x-circle"></i></a>
                 <?php endif; ?>
             </div>
         </form>
@@ -127,14 +127,14 @@ include __DIR__ . '/includes/header.php';
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
-                    <th style="width: 70px;">ছবি</th>
-                    <th>শিরোনাম</th>
-                    <th>ক্যাটাগরি</th>
-                    <th>প্রতিবেদক</th>
-                    <th>ভিউ</th>
-                    <th>স্ট্যাটাস</th>
-                    <th>প্রকাশনার তারিখ</th>
-                    <th class="text-end" style="width: 140px;">অ্যাকশন</th>
+                    <th style="width: 70px;">Thumb</th>
+                    <th>Headline & Details</th>
+                    <th>Category</th>
+                    <th>Reporter</th>
+                    <th>Views</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th class="text-end" style="width: 140px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -145,41 +145,53 @@ include __DIR__ . '/includes/header.php';
                                 <?php if (!empty($post['thumbnail'])): ?>
                                     <img src="<?= e($post['thumbnail']) ?>" alt="Thumb" class="rounded object-fit-cover border" width="60" height="42">
                                 <?php else: ?>
-                                    <div class="bg-light text-muted d-flex align-items-center justify-content-center rounded border" style="width:60px; height:42px; font-size:10px;">ছবি নেই</div>
+                                    <div class="bg-light text-muted d-flex align-items-center justify-content-center rounded border" style="width:60px; height:42px; font-size:10px;">No Image</div>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <a href="post-edit.php?id=<?= (int)$post['id'] ?>" class="text-dark text-decoration-none fw-medium d-block" style="max-width: 380px;">
                                     <?= e($post['title']) ?>
                                 </a>
-                                <div class="mt-1">
+                                <div class="mt-1 d-flex flex-wrap gap-1 align-items-center">
                                     <?php if ($post['is_lead']): ?>
-                                        <span class="badge bg-danger" style="font-size:10px;">লিড নিউজ</span>
+                                        <span class="badge bg-danger" style="font-size:10px;">Lead News</span>
                                     <?php endif; ?>
                                     <?php if ($post['is_breaking']): ?>
-                                        <span class="badge bg-warning text-dark" style="font-size:10px;">ব্রেকিং</span>
+                                        <span class="badge bg-warning text-dark" style="font-size:10px;">Breaking</span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($post['keywords'])): ?>
+                                        <span class="badge bg-light text-muted border" style="font-size:10px;" title="Keywords: <?= e($post['keywords']) ?>"><i class="bi bi-tags me-1 text-secondary"></i><?= e(mb_substr($post['keywords'], 0, 30)) ?><?= mb_strlen($post['keywords']) > 30 ? '...' : '' ?></span>
                                     <?php endif; ?>
                                 </div>
                             </td>
-                            <td><span class="badge bg-secondary bg-opacity-10 text-secondary"><?= e($post['category_name'] ?? 'অনির্দিষ্ট') ?></span></td>
-                            <td><span class="small text-muted"><?= e($post['reporter_name'] ?? '') ?></span></td>
-                            <td><span class="small text-muted"><i class="bi bi-eye me-1"></i><?= bn_number($post['views']) ?></span></td>
                             <td>
-                                <?php if ($post['status'] === 'published'): ?>
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle">প্রকাশিত</span>
-                                <?php else: ?>
-                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle">খসড়া</span>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary"><?= e($post['category_name'] ?? 'Uncategorized') ?></span>
+                                <?php if (!empty($post['district'])): ?>
+                                    <div class="mt-1">
+                                        <span class="badge bg-light text-secondary border fw-normal" style="font-size:10px;" title="<?= e(implode(' › ', array_filter([$post['division'] ?? '', $post['district'] ?? '', $post['upazila'] ?? '']))) ?>">
+                                            <i class="bi bi-geo-alt-fill text-danger me-1"></i><?= e($post['district']) ?><?= !empty($post['upazila']) ? ' › ' . e($post['upazila']) : '' ?>
+                                        </span>
+                                    </div>
                                 <?php endif; ?>
                             </td>
-                            <td class="small text-muted"><?= bn_date($post['created_at'], false) ?></td>
+                            <td><span class="small text-muted"><?= e($post['reporter_name'] ?? '') ?></span></td>
+                            <td><span class="small text-muted"><i class="bi bi-eye me-1"></i><?= number_format((int)$post['views']) ?></span></td>
+                            <td>
+                                <?php if ($post['status'] === 'published'): ?>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Published</span>
+                                <?php else: ?>
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Draft</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="small text-muted"><?= date('M d, Y', strtotime($post['created_at'])) ?></td>
                             <td class="text-end">
-                                <a href="../single.php?id=<?= (int)$post['id'] ?>" target="_blank" class="btn btn-sm btn-light border text-secondary" title="দেখুন">
+                                <a href="../single.php?id=<?= (int)$post['id'] ?>" target="_blank" class="btn btn-sm btn-light border text-secondary" title="View Article">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a href="post-edit.php?id=<?= (int)$post['id'] ?>" class="btn btn-sm btn-light border text-primary" title="সম্পাদনা">
+                                <a href="post-edit.php?id=<?= (int)$post['id'] ?>" class="btn btn-sm btn-light border text-primary" title="Edit Article">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <a href="post-list.php?action=delete&id=<?= (int)$post['id'] ?>&csrf_token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-light border text-danger btn-confirm-delete" title="মুছে ফেলুন">
+                                <a href="post-list.php?action=delete&id=<?= (int)$post['id'] ?>&csrf_token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-light border text-danger" title="Delete Article" onclick="return confirm('Are you sure you want to delete this article?');">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </td>
@@ -189,7 +201,7 @@ include __DIR__ . '/includes/header.php';
                     <tr>
                         <td colspan="8" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox fs-2 d-block text-secondary mb-2"></i>
-                            কোনো সংবাদ পাওয়া যায়নি।
+                            No articles found matching your criteria.
                         </td>
                     </tr>
                 <?php endif; ?>
@@ -200,24 +212,24 @@ include __DIR__ . '/includes/header.php';
     <!-- Pagination -->
     <?php if ($totalPages > 1): ?>
         <div class="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center">
-            <span class="small text-muted">পৃষ্ঠা <?= bn_number($page) ?> / <?= bn_number($totalPages) ?></span>
+            <span class="small text-muted">Page <?= number_format($page) ?> of <?= number_format($totalPages) ?></span>
             <nav aria-label="Page navigation">
                 <ul class="pagination pagination-sm mb-0">
                     <?php if ($page > 1): ?>
                         <li class="page-item">
-                            <a class="page-link" href="post-list.php?page=<?= $page - 1 ?>&category_id=<?= $categoryId ?>&q=<?= urlencode($search) ?>">পূর্ববর্তী</a>
+                            <a class="page-link" href="post-list.php?page=<?= $page - 1 ?>&category_id=<?= $categoryId ?>&q=<?= urlencode($search) ?>">Previous</a>
                         </li>
                     <?php endif; ?>
 
                     <?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
                         <li class="page-item <?= ($i === $page) ? 'active' : '' ?>">
-                            <a class="page-link" href="post-list.php?page=<?= $i ?>&category_id=<?= $categoryId ?>&q=<?= urlencode($search) ?>"><?= bn_number($i) ?></a>
+                            <a class="page-link" href="post-list.php?page=<?= $i ?>&category_id=<?= $categoryId ?>&q=<?= urlencode($search) ?>"><?= $i ?></a>
                         </li>
                     <?php endfor; ?>
 
                     <?php if ($page < $totalPages): ?>
                         <li class="page-item">
-                            <a class="page-link" href="post-list.php?page=<?= $page + 1 ?>&category_id=<?= $categoryId ?>&q=<?= urlencode($search) ?>">পরবর্তী</a>
+                            <a class="page-link" href="post-list.php?page=<?= $page + 1 ?>&category_id=<?= $categoryId ?>&q=<?= urlencode($search) ?>">Next</a>
                         </li>
                     <?php endif; ?>
                 </ul>

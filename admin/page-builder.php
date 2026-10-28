@@ -10,7 +10,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/auth_guard.php';
 
 $db = get_db();
-$pageTitle = 'পেজ বিল্ডার (Page Builder) | আলোকিত গৌড়';
+$pageTitle = 'Page Builder | Alokito Gour';
 
 // Handle AJAX Save Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_layout') {
@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     // Verify valid JSON
     $decoded = json_decode($rawLayout, true);
     if (!is_array($decoded)) {
-        echo json_encode(['success' => false, 'message' => 'অবৈধ লেআউট ডাটা']);
+        echo json_encode(['success' => false, 'message' => 'Invalid layout data']);
         exit;
     }
 
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     echo json_encode([
         'success' => true,
-        'message' => 'লেআউট সফলভাবে সংরক্ষিত হয়েছে!',
+        'message' => 'Layout saved successfully!',
         'count' => count($decoded)
     ], JSON_UNESCAPED_UNICODE);
     exit;
@@ -54,13 +54,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $newSlug = slugify(trim($_POST['slug'] ?? ''));
 
         if (empty($newTitle) || empty($newSlug)) {
-            set_flash('danger', 'পাতার নাম ও স্ল্যাগ প্রদান করা বাধ্যতামূলক।');
+            set_flash('danger', 'Page title and slug are required.');
         } else {
             // Check uniqueness
             $checkStmt = $db->prepare("SELECT id FROM page_layouts WHERE page_slug = ?");
             $checkStmt->execute([$newSlug]);
             if ($checkStmt->fetch()) {
-                set_flash('danger', 'এই স্ল্যাগে ইতোমধ্যে একটি পাতা তৈরি করা আছে।');
+                set_flash('danger', 'A page with this slug already exists.');
             } else {
                 $template = $_POST['template'] ?? 'blank';
                 $initData = '[]';
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $insStmt = $db->prepare("INSERT INTO page_layouts (page_slug, title, layout_data, status) VALUES (?, ?, ?, 1)");
                 $insStmt->execute([$newSlug, $newTitle, $initData]);
-                set_flash('success', "নতুন পাতা '{$newTitle}' সফলভাবে তৈরি হয়েছে।");
+                set_flash('success', "New page '{$newTitle}' created successfully.");
                 header("Location: page-builder.php?page={$newSlug}");
                 exit;
             }
@@ -80,11 +80,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'delete_page') {
         $delSlug = trim($_POST['del_slug'] ?? '');
         if ($delSlug === 'home' || $delSlug === 'news_sidebar') {
-            set_flash('danger', 'মূল সিস্টেম লেআউট মুছে ফেলা যাবে না।');
+            set_flash('danger', 'Core system layouts cannot be deleted.');
         } else {
             $delStmt = $db->prepare("DELETE FROM page_layouts WHERE page_slug = ?");
             $delStmt->execute([$delSlug]);
-            set_flash('success', 'পাতাটি সফলভাবে মুছে ফেলা হয়েছে।');
+            set_flash('success', 'Page deleted successfully.');
             header('Location: page-builder.php?page=home');
             exit;
         }
@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [
                 'id' => 'sec_hero_lead',
                 'type' => 'hero_lead',
-                'title' => 'প্রধান ও শীর্ষ সংবাদ (Hero Lead Section)',
+                'title' => 'Top & Lead Stories (Hero Lead Section)',
                 'container' => 'main',
                 'status' => 1,
                 'settings' => ['bottom_thumbs' => 3, 'sub_leads' => 3]
@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [
                 'id' => 'sec_ad_after_lead',
                 'type' => 'ad_banner',
-                'title' => 'বিজ্ঞাপন ব্যানার (লিডের পর)',
+                'title' => 'Ad Banner (After Lead)',
                 'container' => 'main',
                 'status' => 1,
                 'settings' => ['position' => 'after_lead']
@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [
                 'id' => 'sec_cat_chapai',
                 'type' => 'category_block',
-                'title' => 'চাঁপাইনবাবগঞ্জ',
+                'title' => 'Chapainawabganj',
                 'container' => 'main',
                 'status' => 1,
                 'settings' => ['category_slug' => 'chapai-nawabganj', 'limit' => 5, 'show_more' => true]
@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [
                 'id' => 'sec_cat_national',
                 'type' => 'category_grid',
-                'title' => 'জাতীয়',
+                'title' => 'National',
                 'container' => 'main',
                 'status' => 1,
                 'settings' => ['category_slug' => 'national', 'limit' => 4, 'show_more' => true]
@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [
                 'id' => 'sec_cat_politics_intl',
                 'type' => 'category_split',
-                'title' => 'রাজনীতি ও আন্তর্জাতিক',
+                'title' => 'Politics & International',
                 'container' => 'main',
                 'status' => 1,
                 'settings' => [
@@ -140,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [
                 'id' => 'sec_cat_economy_law',
                 'type' => 'category_split',
-                'title' => 'অর্থনীতি ও আইন-অধিকার',
+                'title' => 'Economy & Law-Rights',
                 'container' => 'main',
                 'status' => 1,
                 'settings' => [
@@ -154,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [
                 'id' => 'sec_cat_tech_religion',
                 'type' => 'category_split',
-                'title' => 'বিজ্ঞান ও প্রযুক্তি এবং ধর্ম',
+                'title' => 'Tech & Religion',
                 'container' => 'main',
                 'status' => 1,
                 'settings' => [
@@ -168,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [
                 'id' => 'sec_cat_jobs_edu',
                 'type' => 'category_split',
-                'title' => 'চাকরি ও ক্যারিয়ার এবং শিক্ষা-সাহিত্য',
+                'title' => 'Jobs & Education',
                 'container' => 'main',
                 'status' => 1,
                 'settings' => [
@@ -182,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [
                 'id' => 'sec_full_country_sports',
                 'type' => 'full_width_split',
-                'title' => 'সারাদেশ ও খেলাধুলা',
+                'title' => 'Countrywide & Sports',
                 'container' => 'full',
                 'status' => 1,
                 'settings' => [
@@ -196,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [
                 'id' => 'sec_gallery',
                 'type' => 'multimedia_gallery',
-                'title' => 'ছবি ও ভিডিও গ্যালারি',
+                'title' => 'Photo & Video Gallery',
                 'container' => 'full',
                 'status' => 1,
                 'settings' => ['title' => 'ছবি ও ভিডিও গ্যালারি', 'limit' => 4]
@@ -205,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $upStmt = $db->prepare("UPDATE page_layouts SET layout_data = ? WHERE page_slug = 'home'");
         $upStmt->execute([json_encode($defaultHomeLayout, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)]);
-        set_flash('success', 'হোমপেজ লেআউট ডিফল্ট সেকশনে সফলভাবে রিসেট করা হয়েছে।');
+        set_flash('success', 'Homepage layout successfully reset to default sections.');
         header('Location: page-builder.php?page=home');
         exit;
     }
@@ -254,7 +254,7 @@ include __DIR__ . '/includes/header.php';
                 <!-- Page Selector -->
                 <div class="col-xl-4 col-lg-5 col-md-6">
                     <div class="d-flex align-items-center gap-2">
-                        <label class="form-label mb-0 fw-bold small text-nowrap"><i class="bi bi-file-earmark-code me-1 text-warning"></i>পাতা:</label>
+                        <label class="form-label mb-0 fw-bold small text-nowrap"><i class="bi bi-file-earmark-code me-1 text-warning"></i>Page:</label>
                         <select class="form-select form-select-sm" id="pageSelector" onchange="location.href='page-builder.php?page=' + this.value;">
                             <?php foreach ($allPages as $p): ?>
                                 <option value="<?= e($p['page_slug']) ?>" <?= $p['page_slug'] === $currentSlug ? 'selected' : '' ?>>
@@ -262,7 +262,7 @@ include __DIR__ . '/includes/header.php';
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <button type="button" class="btn btn-outline-primary btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#createPageModal">
+                        <button type="button" class="btn btn-outline-primary btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#createPageModal" title="Create New Page">
                             <i class="bi bi-plus-lg"></i>
                         </button>
                     </div>
@@ -271,14 +271,14 @@ include __DIR__ . '/includes/header.php';
                 <!-- View Mode Switcher & Device Controls -->
                 <div class="col-xl-4 col-lg-7 col-md-6 text-center">
                     <div class="d-inline-flex align-items-center gap-1 bg-light p-1 rounded border">
-                        <button type="button" class="btn btn-sm btn-white border shadow-sm active" id="btnModeSplit" onclick="setBuilderMode('split')" title="স্প্লিট মোড: বিল্ডার ও লাইভ প্রিভিউ একসাথে">
-                            <i class="bi bi-layout-split me-1 text-primary"></i>স্প্লিট ভিউ
+                        <button type="button" class="btn btn-sm btn-white border shadow-sm active" id="btnModeSplit" onclick="setBuilderMode('split')" title="Split Mode: Canvas and Live Preview together">
+                            <i class="bi bi-layout-split me-1 text-primary"></i>Split View
                         </button>
-                        <button type="button" class="btn btn-sm btn-light border-0" id="btnModeCanvas" onclick="setBuilderMode('canvas')" title="শুধুমাত্র ক্যানভাস ড্র্যাগ-ড্রপ">
-                            <i class="bi bi-card-checklist me-1 text-secondary"></i>ক্যানভাস
+                        <button type="button" class="btn btn-sm btn-light border-0" id="btnModeCanvas" onclick="setBuilderMode('canvas')" title="Canvas Drag-and-Drop Only">
+                            <i class="bi bi-card-checklist me-1 text-secondary"></i>Canvas
                         </button>
-                        <button type="button" class="btn btn-sm btn-light border-0" id="btnModePreview" onclick="setBuilderMode('preview')" title="ফুলস্ক্রিন লাইভ প্রিভিউ">
-                            <i class="bi bi-eye me-1 text-success"></i>ফুল প্রিভিউ
+                        <button type="button" class="btn btn-sm btn-light border-0" id="btnModePreview" onclick="setBuilderMode('preview')" title="Fullscreen Live Preview">
+                            <i class="bi bi-eye me-1 text-success"></i>Full Preview
                         </button>
                     </div>
                 </div>
@@ -289,32 +289,32 @@ include __DIR__ . '/includes/header.php';
                         <?php 
                         $previewUrl = ($currentSlug === 'home') ? '/' : (($currentSlug === 'news_sidebar') ? '/news/1' : '/page/' . urlencode($currentSlug));
                         ?>
-                        <a href="<?= e($previewUrl) ?>" target="_blank" class="btn btn-outline-secondary btn-sm" title="নতুন ট্যাবে আসল সাইট দেখুন">
-                            <i class="bi bi-box-arrow-up-right me-1"></i>লাইভ সাইট
+                        <a href="<?= e($previewUrl) ?>" target="_blank" class="btn btn-outline-secondary btn-sm" title="View live website in new tab">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>Live Site
                         </a>
 
                         <?php if ($currentSlug === 'home'): ?>
-                            <form method="POST" class="d-inline" onsubmit="return confirm('আপনি কি নিশ্চিত যে হোমপেজের সকল সেকশন মূল ডিফল্ট অবস্থায় ফিরিয়ে নিতে চান?');">
+                            <form method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to reset all homepage sections to original default layout?');">
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="form_action" value="reset_default">
-                                <button type="submit" class="btn btn-outline-danger btn-sm" title="ডিফল্ট লেআউটে ফিরিয়ে আনুন">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Reset to Default Layout">
                                     <i class="bi bi-arrow-counterclockwise"></i>
                                 </button>
                             </form>
                         <?php elseif ($currentSlug !== 'news_sidebar'): ?>
-                            <form method="POST" class="d-inline" onsubmit="return confirm('আপনি কি নিশ্চিত যে এই পাতাটি মুছে ফেলতে চান?');">
+                            <form method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this page?');">
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="form_action" value="delete_page">
                                 <input type="hidden" name="del_slug" value="<?= e($currentSlug) ?>">
-                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Page">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
                         <?php endif; ?>
 
-                        <!-- Big Save Layout Button -->
+                        <!-- Save Layout Button -->
                         <button type="button" class="btn btn-success btn-sm px-3 fw-bold" id="btnSaveLayout" onclick="saveLayout();">
-                            <i class="bi bi-check2-circle me-1"></i>সংরক্ষণ করুন
+                            <i class="bi bi-check2-circle me-1"></i>Save Layout
                         </button>
                     </div>
                 </div>
@@ -322,7 +322,7 @@ include __DIR__ . '/includes/header.php';
         </div>
     </div>
 
-    <!-- Page Builder Workspace Grid (Supports Split, Canvas, and Full Preview Modes) -->
+    <!-- Page Builder Workspace Grid -->
     <div class="row g-3" id="workspaceRow">
         <!-- Column 1: Builder Canvas & Widget Library -->
         <div class="col-xl-5 col-lg-6" id="builderCol">
@@ -330,9 +330,9 @@ include __DIR__ . '/includes/header.php';
             <div class="card border-0 shadow-sm mb-3">
                 <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="mb-0 fw-bold text-dark small"><i class="bi bi-ui-checks me-1 text-primary"></i>উইজেট তালিকা (ড্র্যাগ এন্ড ড্রপ)</h6>
+                        <h6 class="mb-0 fw-bold text-dark small"><i class="bi bi-ui-checks me-1 text-primary"></i>Canvas Widgets (Drag & Drop)</h6>
                     </div>
-                    <span class="badge bg-secondary-subtle text-secondary" id="widgetCountBadge"><?= count($currentWidgets) ?> টি</span>
+                    <span class="badge bg-secondary-subtle text-secondary" id="widgetCountBadge"><?= count($currentWidgets) ?></span>
                 </div>
 
                 <div class="card-body p-2 p-md-3">
@@ -346,8 +346,8 @@ include __DIR__ . '/includes/header.php';
             <!-- Widget Drawer Palette -->
             <div class="card border-0 shadow-sm" id="widgetDrawerCard">
                 <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 fw-bold text-dark small"><i class="bi bi-puzzle-fill me-1 text-warning"></i>+ উইজেট যোগ করুন (লাইব্রেরি)</h6>
-                    <small class="text-muted" style="font-size: 11px;">ক্লিক করলে যুক্ত হবে</small>
+                    <h6 class="mb-0 fw-bold text-dark small"><i class="bi bi-puzzle-fill me-1 text-warning"></i>+ Add Widget (Library)</h6>
+                    <small class="text-muted" style="font-size: 11px;">Click to append to canvas</small>
                 </div>
 
                 <div class="card-body p-2 p-md-3" style="max-height: 400px; overflow-y: auto;">
@@ -359,8 +359,8 @@ include __DIR__ . '/includes/header.php';
                                     <i class="bi bi-newspaper"></i>
                                 </div>
                                 <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">প্রধান ও শীর্ষ সংবাদ (Hero Lead)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">১টি বড় লিড, ৩টি ছোট থাম্ব ও ৩টি পাশের লিড</div>
+                                    <div class="fw-bold small text-dark lh-sm">Hero Lead Stories</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">1 main lead story, 3 bottom thumbnails, and 3 sub-leads</div>
                                 </div>
                             </div>
                         </div>
@@ -372,8 +372,8 @@ include __DIR__ . '/includes/header.php';
                                     <i class="bi bi-badge-ad"></i>
                                 </div>
                                 <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">বিজ্ঞাপন ব্যানার (Ad Banner)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">লিড পরবর্তী বা সাইডবার বিজ্ঞাপন ব্যানার</div>
+                                    <div class="fw-bold small text-dark lh-sm">Advertisement Banner</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">After-lead or sidebar advertisement banner slot</div>
                                 </div>
                             </div>
                         </div>
@@ -385,8 +385,8 @@ include __DIR__ . '/includes/header.php';
                                     <i class="bi bi-card-heading"></i>
                                 </div>
                                 <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">ক্যাটাগরি ব্লক (১টি বড় + তালিকা)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">বামে ১টি বড় থাম্ব এবং ডানে বুলেট তালিকা (চাঁপাইনবাবগঞ্জ)</div>
+                                    <div class="fw-bold small text-dark lh-sm">Category Block (1 Big + List)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">Featured thumbnail on left and bullet news list on right</div>
                                 </div>
                             </div>
                         </div>
@@ -398,8 +398,8 @@ include __DIR__ . '/includes/header.php';
                                     <i class="bi bi-grid-fill"></i>
                                 </div>
                                 <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">ক্যাটাগরি গ্রিড (৪টি থাম্ব কার্ড)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">৪টি ফটোযুক্ত কার্ডের ২x২ রেসপন্সিভ গ্রিড (জাতীয়)</div>
+                                    <div class="fw-bold small text-dark lh-sm">Category Grid (4 Thumb Cards)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">2x2 responsive photo grid of news cards</div>
                                 </div>
                             </div>
                         </div>
@@ -411,8 +411,8 @@ include __DIR__ . '/includes/header.php';
                                     <i class="bi bi-layout-split"></i>
                                 </div>
                                 <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">দ্বৈত ক্যাটাগরি (পাশাপাশি ২টি বিভাগ)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">পাশাপাশি ২টি ভিন্ন ক্যাটাগরির সংবাদ (যেমন রাজনীতি ও আন্তর্জাতিক)</div>
+                                    <div class="fw-bold small text-dark lh-sm">Dual Category (Side-by-side)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">Side-by-side 2 different news categories</div>
                                 </div>
                             </div>
                         </div>
@@ -424,8 +424,8 @@ include __DIR__ . '/includes/header.php';
                                     <i class="bi bi-distribute-horizontal"></i>
                                 </div>
                                 <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">ফুল-উইডথ ডাবল ব্লক (সারাদেশ/খেলাধুলা)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">১২ কলাম জুড়ে পাশাপাশি ২টি ক্যাটাগরি</div>
+                                    <div class="fw-bold small text-dark lh-sm">Full-Width Double Block</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">Full 12-column row with two side-by-side categories</div>
                                 </div>
                             </div>
                         </div>
@@ -437,8 +437,8 @@ include __DIR__ . '/includes/header.php';
                                     <i class="bi bi-camera-fill"></i>
                                 </div>
                                 <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">ছবি ও ভিডিও গ্যালারি (Gallery)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">ডার্ক ব্যাকড্রপে ফটো ও ভিডিও কার্ড</div>
+                                    <div class="fw-bold small text-dark lh-sm">Photo & Video Gallery</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">Dark background grid for photo and video stories</div>
                                 </div>
                             </div>
                         </div>
@@ -450,8 +450,8 @@ include __DIR__ . '/includes/header.php';
                                     <i class="bi bi-code-slash"></i>
                                 </div>
                                 <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">কাস্টম এইচটিএমএল / নোটিশ (Embed)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">ইউটিউব ভিডিও বা নিজস্ব কাস্টম কোড</div>
+                                    <div class="fw-bold small text-dark lh-sm">Custom HTML / Notice (Embed)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">Embed YouTube video, iframe, or custom HTML/CSS</div>
                                 </div>
                             </div>
                         </div>
@@ -463,8 +463,8 @@ include __DIR__ . '/includes/header.php';
                                     <i class="bi bi-clock-history"></i>
                                 </div>
                                 <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">সর্বশেষ ও জনপ্রিয় সংবাদ ট্যাব</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">সাইডবারের জন্য সর্বশেষ ও সর্বাধিক পঠিত সংবাদ</div>
+                                    <div class="fw-bold small text-dark lh-sm">Latest & Popular News Tabs</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">Tabbed news widget for latest and most-read stories</div>
                                 </div>
                             </div>
                         </div>
@@ -476,8 +476,8 @@ include __DIR__ . '/includes/header.php';
                                     <i class="bi bi-geo-alt-fill"></i>
                                 </div>
                                 <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">আমার এলাকার খবর (জেলা ফিল্টার)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">জেলাভিত্তিক বাটন গ্রিড ফিল্টার</div>
+                                    <div class="fw-bold small text-dark lh-sm">Local News (District Filter)</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">Interactive district button grid filter</div>
                                 </div>
                             </div>
                         </div>
@@ -492,27 +492,27 @@ include __DIR__ . '/includes/header.php';
                 <!-- Preview Device & Control Header -->
                 <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="fw-bold text-dark small"><i class="bi bi-display me-1 text-success"></i>রিয়েল-টাইম লাইভ প্রিভিউ</span>
+                        <span class="fw-bold text-dark small"><i class="bi bi-display me-1 text-success"></i>Real-Time Live Preview</span>
                         <span class="badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1" id="liveSyncStatus" style="font-size: 11px;">
-                            <span class="spinner-grow spinner-grow-sm text-success" style="width: 7px; height: 7px;"></span>সিঙ্ক সক্রিয়
+                            <span class="spinner-grow spinner-grow-sm text-success" style="width: 7px; height: 7px;"></span>Sync Active
                         </span>
                     </div>
 
                     <!-- Device Switcher Buttons -->
                     <div class="d-flex align-items-center gap-1">
                         <div class="btn-group btn-group-sm" role="group">
-                            <button type="button" class="btn btn-light border active" id="btnDevDesktop" onclick="setPreviewSize('desktop')" title="ডেস্কটপ ভিউ (১০০%)">
+                            <button type="button" class="btn btn-light border active" id="btnDevDesktop" onclick="setPreviewSize('desktop')" title="Desktop View (100%)">
                                 <i class="bi bi-display"></i>
                             </button>
-                            <button type="button" class="btn btn-light border" id="btnDevTablet" onclick="setPreviewSize('tablet')" title="ট্যাবলেট ভিউ (৭৬৮px)">
+                            <button type="button" class="btn btn-light border" id="btnDevTablet" onclick="setPreviewSize('tablet')" title="Tablet View (768px)">
                                 <i class="bi bi-tablet"></i>
                             </button>
-                            <button type="button" class="btn btn-light border" id="btnDevMobile" onclick="setPreviewSize('mobile')" title="মোবাইল ভিউ (৩৭৫px)">
+                            <button type="button" class="btn btn-light border" id="btnDevMobile" onclick="setPreviewSize('mobile')" title="Mobile View (375px)">
                                 <i class="bi bi-phone"></i>
                             </button>
                         </div>
 
-                        <button type="button" class="btn btn-light border btn-sm" onclick="refreshLivePreview()" title="রিফ্রেশ প্রিভিউ">
+                        <button type="button" class="btn btn-light border btn-sm" onclick="refreshLivePreview()" title="Refresh Preview">
                             <i class="bi bi-arrow-clockwise"></i>
                         </button>
                     </div>
@@ -537,7 +537,7 @@ include __DIR__ . '/includes/header.php';
         <div class="modal-content">
             <div class="modal-header bg-light">
                 <h6 class="modal-title fw-bold" id="widgetSettingsModalLabel">
-                    <i class="bi bi-sliders me-1 text-warning"></i>উইজেট কনফিগারেশন
+                    <i class="bi bi-sliders me-1 text-warning"></i>Widget Configuration
                 </h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -545,9 +545,9 @@ include __DIR__ . '/includes/header.php';
                 <!-- Form dynamically rendered by JS based on widget type -->
             </div>
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">বাতিল</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary btn-sm px-3" onclick="applyWidgetSettings();">
-                    <i class="bi bi-check2 me-1"></i>সেটিংস আপডেট করুন
+                    <i class="bi bi-check2 me-1"></i>Apply Settings
                 </button>
             </div>
         </div>
@@ -563,33 +563,33 @@ include __DIR__ . '/includes/header.php';
                 <input type="hidden" name="form_action" value="create_page">
                 <div class="modal-header bg-light">
                     <h6 class="modal-title fw-bold" id="createPageModalLabel">
-                        <i class="bi bi-file-earmark-plus me-1 text-primary"></i>নতুন পেজ তৈরি করুন
+                        <i class="bi bi-file-earmark-plus me-1 text-primary"></i>Create New Page
                     </h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">পাতার শিরোনাম <span class="text-danger">*</span></label>
-                        <input type="text" name="title" class="form-control" placeholder="যেমন: বিশেষ সংবাদ আয়োজন" required id="newPageTitle" onkeyup="autoSlug(this.value);">
+                        <label class="form-label fw-bold small">Page Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g. Special News Coverage" required id="newPageTitle" onkeyup="autoSlug(this.value);">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">পাতার ইউআরএল স্ল্যাগ (Slug) <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold small">Page URL Slug <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text small">/page/</span>
-                            <input type="text" name="slug" class="form-control" placeholder="special-news" required id="newPageSlug">
+                            <input type="text" name="slug" class="form-control" placeholder="special-coverage" required id="newPageSlug">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">প্রাথমিক লেআউট টেমপ্লেট</label>
+                        <label class="form-label fw-bold small">Initial Layout Template</label>
                         <select name="template" class="form-select">
-                            <option value="blank">খালি পাতা (ব্ল্যাঙ্ক ক্যানভাস)</option>
-                            <option value="home_clone">হোমপেজের অনুরূপ লেআউট কপি করুন</option>
+                            <option value="blank">Blank Canvas</option>
+                            <option value="home_clone">Clone Homepage Layout</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">বাতিল</button>
-                    <button type="submit" class="btn btn-primary btn-sm px-3">পাতা তৈরি করুন</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-3">Create Page</button>
                 </div>
             </form>
         </div>
@@ -601,14 +601,14 @@ include __DIR__ . '/includes/header.php';
     <div id="saveToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
             <div class="toast-body fs-6" id="saveToastMessage">
-                <i class="bi bi-check-circle-fill me-2"></i>লেআউট সফলভাবে সংরক্ষিত হয়েছে!
+                <i class="bi bi-check-circle-fill me-2"></i>Layout saved successfully!
             </div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     </div>
 </div>
 
-<!-- SortableJS CDN (Lightweight zero-runtime library) -->
+<!-- SortableJS CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 
 <script>
@@ -625,83 +625,83 @@ let currentDevice = 'desktop'; // 'desktop', 'tablet', 'mobile'
 // Widget Meta Registry
 const WIDGET_META = {
     hero_lead: {
-        label: 'প্রধান ও শীর্ষ সংবাদ',
+        label: 'Hero Lead Stories',
         icon: 'bi-newspaper',
         colorClass: 'type-hero_lead',
         defaultContainer: 'main',
-        defaultTitle: 'প্রধান ও শীর্ষ সংবাদ (Hero Lead Section)',
+        defaultTitle: 'Top & Lead Stories (Hero Lead Section)',
         defaultSettings: { bottom_thumbs: 3, sub_leads: 3 }
     },
     ad_banner: {
-        label: 'বিজ্ঞাপন ব্যানার',
+        label: 'Advertisement Banner',
         icon: 'bi-badge-ad',
         colorClass: 'type-ad_banner',
         defaultContainer: 'main',
-        defaultTitle: 'বিজ্ঞাপন ব্যানার (লিডের পর)',
+        defaultTitle: 'Ad Banner (After Lead)',
         defaultSettings: { position: 'after_lead', custom_code: '' }
     },
     category_block: {
-        label: 'ক্যাটাগরি ব্লক (১টি বড় + তালিকা)',
+        label: 'Category Block (1 Big + List)',
         icon: 'bi-card-heading',
         colorClass: 'type-category_block',
         defaultContainer: 'main',
-        defaultTitle: 'চাঁপাইনবাবগঞ্জ',
+        defaultTitle: 'Chapainawabganj',
         defaultSettings: { category_slug: 'chapai-nawabganj', limit: 5, show_more: true }
     },
     category_grid: {
-        label: 'ক্যাটাগরি গ্রিড (৪টি কার্ড)',
+        label: 'Category Grid (4 Thumb Cards)',
         icon: 'bi-grid-fill',
         colorClass: 'type-category_grid',
         defaultContainer: 'main',
-        defaultTitle: 'জাতীয়',
+        defaultTitle: 'National',
         defaultSettings: { category_slug: 'national', limit: 4, show_more: true }
     },
     category_split: {
-        label: 'দ্বৈত ক্যাটাগরি (পাশাপাশি ২টি)',
+        label: 'Dual Category (Side-by-side)',
         icon: 'bi-layout-split',
         colorClass: 'type-category_split',
         defaultContainer: 'main',
-        defaultTitle: 'রাজনীতি ও আন্তর্জাতিক',
+        defaultTitle: 'Politics & International',
         defaultSettings: { left_category: 'politics', left_title: 'রাজনীতি', right_category: 'international', right_title: 'আন্তর্জাতিক', limit: 4 }
     },
     full_width_split: {
-        label: 'ফুল-উইডথ ডাবল ব্লক',
+        label: 'Full-Width Double Block',
         icon: 'bi-distribute-horizontal',
         colorClass: 'type-full_width_split',
         defaultContainer: 'full',
-        defaultTitle: 'সারাদেশ ও খেলাধুলা',
+        defaultTitle: 'Countrywide & Sports',
         defaultSettings: { left_category: 'country', left_title: 'সারাদেশ', right_category: 'sports', right_title: 'খেলাধুলা', limit: 4 }
     },
     multimedia_gallery: {
-        label: 'ছবি ও ভিডিও গ্যালারি',
+        label: 'Photo & Video Gallery',
         icon: 'bi-camera-fill',
         colorClass: 'type-multimedia_gallery',
         defaultContainer: 'full',
-        defaultTitle: 'ছবি ও ভিডিও গ্যালারি',
+        defaultTitle: 'Photo & Video Gallery',
         defaultSettings: { title: 'ছবি ও ভিডিও গ্যালারি', limit: 4 }
     },
     custom_html: {
-        label: 'কাস্টম কোড / নোটিশ',
+        label: 'Custom HTML / Embed',
         icon: 'bi-code-slash',
         colorClass: 'type-custom_html',
         defaultContainer: 'main',
-        defaultTitle: 'বিশেষ নোটিশ / কাস্টম উইজেট',
-        defaultSettings: { content: '<div class="p-3 bg-light border rounded">কাস্টম নোটিশ বা এম্বেড কোড এখানে দিন...</div>' }
+        defaultTitle: 'Custom Notice / Embed Code',
+        defaultSettings: { content: '<div class="p-3 bg-light border rounded">Custom notice or embed code here...</div>' }
     },
     sidebar_tabs: {
-        label: 'সর্বশেষ ও জনপ্রিয় সংবাদ ট্যাব',
+        label: 'Latest & Popular News Tabs',
         icon: 'bi-clock-history',
         colorClass: 'type-sidebar_tabs',
         defaultContainer: 'main',
-        defaultTitle: 'সর্বশেষ ও জনপ্রিয় সংবাদ ট্যাব',
+        defaultTitle: 'Latest & Popular Stories',
         defaultSettings: { limit: 7 }
     },
     district_filter: {
-        label: 'আমার এলাকার খবর (জেলা ফিল্টার)',
+        label: 'Local News (District Filter)',
         icon: 'bi-geo-alt-fill',
         colorClass: 'type-district_filter',
         defaultContainer: 'main',
-        defaultTitle: 'আমার এলাকার খবর (জেলা ফিল্টার)',
+        defaultTitle: 'Regional News (District Filter)',
         defaultSettings: {}
     }
 };
@@ -712,14 +712,14 @@ const WIDGET_META = {
 function renderCanvas() {
     const canvas = document.getElementById('widgetCanvas');
     const badge = document.getElementById('widgetCountBadge');
-    badge.innerText = `${currentWidgets.length} টি`;
+    badge.innerText = `${currentWidgets.length}`;
 
     if (currentWidgets.length === 0) {
         canvas.innerHTML = `
             <div class="text-center py-4 text-muted">
                 <i class="bi bi-layers fs-2 opacity-50 d-block mb-1"></i>
-                <h6 class="small mb-1">বর্তমানে কোনো উইজেট নেই</h6>
-                <p class="text-muted" style="font-size: 11px;">নিচের লাইব্রেরি থেকে উইজেট যোগ করুন।</p>
+                <h6 class="small mb-1">No widgets on canvas</h6>
+                <p class="text-muted" style="font-size: 11px;">Click any widget from the library below to add it.</p>
             </div>
         `;
         return;
@@ -736,13 +736,13 @@ function renderCanvas() {
 
         const isHidden = (w.status === 0 || w.status === '0');
         const container = w.container || meta.defaultContainer || 'main';
-        const containerLabel = (container === 'full') ? 'ফুল-উইডথ' : 'মূল কলাম';
+        const containerLabel = (container === 'full') ? 'Full Width' : 'Main Column';
         const containerBadgeClass = (container === 'full') ? 'bg-success-subtle text-success' : 'bg-primary-subtle text-primary';
 
         html += `
             <div class="widget-card ${meta.colorClass} ${isHidden ? 'is-hidden' : ''} p-2 mb-2" data-index="${idx}">
                 <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
-                    <span class="widget-handle py-1 px-1" title="টেনে সাজান"><i class="bi bi-grip-vertical"></i></span>
+                    <span class="widget-handle py-1 px-1" title="Drag to reorder"><i class="bi bi-grip-vertical"></i></span>
                     <span class="badge ${containerBadgeClass} p-1" style="font-size: 10px;">${containerLabel}</span>
                     <div class="text-truncate">
                         <div class="fw-bold text-dark small text-truncate" style="font-size: 12px;">
@@ -756,22 +756,22 @@ function renderCanvas() {
 
                 <div class="d-flex align-items-center gap-1 ms-1 flex-shrink-0">
                     <!-- Visibility Toggle -->
-                    <button type="button" class="btn btn-sm ${isHidden ? 'btn-outline-secondary' : 'btn-outline-success'} p-0 px-1" style="font-size: 11px;" title="${isHidden ? 'প্রদর্শন করুন' : 'লুকান'}" onclick="toggleVisibility(${idx});">
+                    <button type="button" class="btn btn-sm ${isHidden ? 'btn-outline-secondary' : 'btn-outline-success'} p-0 px-1" style="font-size: 11px;" title="${isHidden ? 'Show' : 'Hide'}" onclick="toggleVisibility(${idx});">
                         <i class="bi ${isHidden ? 'bi-eye-slash' : 'bi-eye'}"></i>
                     </button>
 
                     <!-- Edit Settings -->
-                    <button type="button" class="btn btn-sm btn-outline-primary p-0 px-1" style="font-size: 11px;" title="উইজেট কনফিগার করুন" onclick="editWidget(${idx});">
+                    <button type="button" class="btn btn-sm btn-outline-primary p-0 px-1" style="font-size: 11px;" title="Configure Widget" onclick="editWidget(${idx});">
                         <i class="bi bi-gear-fill"></i>
                     </button>
 
                     <!-- Duplicate -->
-                    <button type="button" class="btn btn-sm btn-outline-secondary p-0 px-1" style="font-size: 11px;" title="ডুপ্লিকেট করুন" onclick="duplicateWidget(${idx});">
+                    <button type="button" class="btn btn-sm btn-outline-secondary p-0 px-1" style="font-size: 11px;" title="Duplicate" onclick="duplicateWidget(${idx});">
                         <i class="bi bi-copy"></i>
                     </button>
 
                     <!-- Delete -->
-                    <button type="button" class="btn btn-sm btn-outline-danger p-0 px-1" style="font-size: 11px;" title="মুছে ফেলুন" onclick="deleteWidget(${idx});">
+                    <button type="button" class="btn btn-sm btn-outline-danger p-0 px-1" style="font-size: 11px;" title="Delete" onclick="deleteWidget(${idx});">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
@@ -790,22 +790,22 @@ function describeWidget(w) {
     switch (w.type) {
         case 'category_block':
         case 'category_grid':
-            return `ক্যাটাগরি: ${s.category_slug || 'জাতীয়'} (${s.limit || 4} টি)`;
+            return `Category: ${s.category_slug || 'national'} (${s.limit || 4} posts)`;
         case 'category_split':
         case 'full_width_split':
             return `${s.left_title || s.left_category} &bull; ${s.right_title || s.right_category}`;
         case 'ad_banner':
-            return `স্লট: ${s.position || 'after_lead'}`;
+            return `Slot: ${s.position || 'after_lead'}`;
         case 'hero_lead':
-            return `লিড + ৩ থাম্ব + ৩ সাইডবার`;
+            return `Lead + 3 Thumbs + 3 Sidebar`;
         case 'multimedia_gallery':
-            return `গ্যালারি (${s.limit || 4} টি)`;
+            return `Gallery (${s.limit || 4} items)`;
         case 'custom_html':
-            return `কাস্টম কোড`;
+            return `Custom HTML`;
         case 'sidebar_tabs':
-            return `সর্বশেষ ও জনপ্রিয় (${s.limit || 7} টি)`;
+            return `Latest & Popular (${s.limit || 7} posts)`;
         case 'district_filter':
-            return `জেলা ফিল্টার গ্রিড`;
+            return `District Filter Grid`;
         default:
             return '';
     }
@@ -830,7 +830,7 @@ function addWidget(type) {
     currentWidgets.push(newWidget);
     renderCanvas();
     updateLivePreview();
-    showToast(`'${meta.label}' উইজেট যুক্ত হয়েছে।`);
+    showToast(`'${meta.label}' widget added.`);
 }
 
 /**
@@ -851,11 +851,11 @@ function duplicateWidget(idx) {
     if (!currentWidgets[idx]) return;
     const clone = JSON.parse(JSON.stringify(currentWidgets[idx]));
     clone.id = `sec_${clone.type}_${Date.now()}`;
-    clone.title = `${clone.title} (কপি)`;
+    clone.title = `${clone.title} (Copy)`;
     currentWidgets.splice(idx + 1, 0, clone);
     renderCanvas();
     updateLivePreview();
-    showToast('উইজেট ডুপ্লিকেট করা হয়েছে।');
+    showToast('Widget duplicated.');
 }
 
 /**
@@ -863,11 +863,11 @@ function duplicateWidget(idx) {
  */
 function deleteWidget(idx) {
     if (!currentWidgets[idx]) return;
-    if (confirm(`আপনি কি নিশ্চিত যে '${currentWidgets[idx].title}' উইজেটটি মুছে ফেলতে চান?`)) {
+    if (confirm(`Are you sure you want to delete '${currentWidgets[idx].title}' widget?`)) {
         currentWidgets.splice(idx, 1);
         renderCanvas();
         updateLivePreview();
-        showToast('উইজেট মুছে ফেলা হয়েছে।');
+        showToast('Widget deleted.');
     }
 }
 
@@ -881,7 +881,7 @@ function editWidget(idx) {
 
     const modalTitle = document.getElementById('widgetSettingsModalLabel');
     const container = document.getElementById('modalFormContainer');
-    modalTitle.innerHTML = `<i class="bi bi-sliders me-1 text-warning"></i>কনফিগারেশন: ${escapeHtml(w.title)}`;
+    modalTitle.innerHTML = `<i class="bi bi-sliders me-1 text-warning"></i>Configuration: ${escapeHtml(w.title)}`;
 
     const s = w.settings || {};
     let fieldsHtml = '';
@@ -890,14 +890,14 @@ function editWidget(idx) {
     fieldsHtml += `
         <div class="row g-3 mb-3">
             <div class="col-md-8">
-                <label class="form-label fw-bold small">উইজেটের শিরোনাম</label>
+                <label class="form-label fw-bold small">Widget Title</label>
                 <input type="text" class="form-control form-control-sm" id="edit_title" value="${escapeHtml(w.title || '')}">
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-bold small">লেআউট অবস্থান</label>
+                <label class="form-label fw-bold small">Layout Position</label>
                 <select class="form-select form-select-sm" id="edit_container">
-                    <option value="main" ${w.container === 'main' ? 'selected' : ''}>মূল কলাম (সাইডবারের পাশে - ৮ কলাম)</option>
-                    <option value="full" ${w.container === 'full' ? 'selected' : ''}>পূর্ণ প্রস্থ (ফুল উইডথ - ১২ কলাম)</option>
+                    <option value="main" ${w.container === 'main' ? 'selected' : ''}>Main Column (8 Columns)</option>
+                    <option value="full" ${w.container === 'full' ? 'selected' : ''}>Full Width (12 Columns)</option>
                 </select>
             </div>
         </div>
@@ -914,19 +914,19 @@ function editWidget(idx) {
         fieldsHtml += `
             <div class="row g-3 mb-3">
                 <div class="col-md-8">
-                    <label class="form-label fw-bold small">ক্যাটাগরি নির্বাচন</label>
+                    <label class="form-label fw-bold small">Select Category</label>
                     <select class="form-select form-select-sm" id="edit_category_slug">
                         ${catOptions}
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold small">সংবাদের সংখ্যা (Limit)</label>
+                    <label class="form-label fw-bold small">Posts Limit</label>
                     <input type="number" class="form-control form-control-sm" id="edit_limit" value="${s.limit || 4}" min="1" max="15">
                 </div>
             </div>
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" type="checkbox" id="edit_show_more" ${s.show_more !== false ? 'checked' : ''}>
-                <label class="form-check-label small" for="edit_show_more">'আরও খবর' লিংক প্রদর্শন করুন</label>
+                <label class="form-check-label small" for="edit_show_more">Display 'More News' Link</label>
             </div>
         `;
     } else if (w.type === 'category_split' || w.type === 'full_width_split') {
@@ -939,45 +939,45 @@ function editWidget(idx) {
 
         fieldsHtml += `
             <div class="border rounded p-3 mb-3 bg-light">
-                <h6 class="fw-bold small text-primary mb-2">বামপাশের কলাম</h6>
+                <h6 class="fw-bold small text-primary mb-2">Left Column</h6>
                 <div class="row g-2">
                     <div class="col-md-6">
-                        <label class="form-label small">ক্যাটাগরি</label>
+                        <label class="form-label small">Category</label>
                         <select class="form-select form-select-sm" id="edit_left_category">${leftOptions}</select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small">কাস্টম শিরোনাম (ঐচ্ছিক)</label>
+                        <label class="form-label small">Custom Title (Optional)</label>
                         <input type="text" class="form-control form-control-sm" id="edit_left_title" value="${escapeHtml(s.left_title || '')}">
                     </div>
                 </div>
             </div>
 
             <div class="border rounded p-3 mb-3 bg-light">
-                <h6 class="fw-bold small text-primary mb-2">ডানপাশের কলাম</h6>
+                <h6 class="fw-bold small text-primary mb-2">Right Column</h6>
                 <div class="row g-2">
                     <div class="col-md-6">
-                        <label class="form-label small">ক্যাটাগরি</label>
+                        <label class="form-label small">Category</label>
                         <select class="form-select form-select-sm" id="edit_right_category">${rightOptions}</select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small">কাস্টম শিরোনাম (ঐচ্ছিক)</label>
+                        <label class="form-label small">Custom Title (Optional)</label>
                         <input type="text" class="form-control form-control-sm" id="edit_right_title" value="${escapeHtml(s.right_title || '')}">
                     </div>
                 </div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label fw-bold small">প্রতি কলামে সংবাদের সংখ্যা</label>
+                <label class="form-label fw-bold small">Posts Count per Column</label>
                 <input type="number" class="form-control form-control-sm" id="edit_limit" value="${s.limit || 4}" min="1" max="10" style="max-width: 150px;">
             </div>
         `;
     } else if (w.type === 'ad_banner') {
         const positions = [
-            { key: 'after_lead', label: 'হোম লিড পরবর্তী ব্যানার (৯৭০x৯০ বা রেসপন্সিভ)' },
-            { key: 'header_right', label: 'হেডার ব্যানার (৭২৮x৯০)' },
-            { key: 'sidebar', label: 'ডান পাশের সাইডবার মূল ব্যানার (Sidebar Top)' },
-            { key: 'sidebar_bottom', label: 'ডান পাশের সাইডবার নিচের ব্যানার (Sidebar Bottom)' },
-            { key: 'inside_article', label: 'সংবাদের ভেতরের ব্যানার' }
+            { key: 'after_lead', label: 'After Lead Banner (970x90 or responsive)' },
+            { key: 'header_right', label: 'Header Right Banner (728x90)' },
+            { key: 'sidebar', label: 'Sidebar Top Banner' },
+            { key: 'sidebar_bottom', label: 'Sidebar Bottom Banner' },
+            { key: 'inside_article', label: 'Inside Article Banner' }
         ];
 
         let adOptions = '';
@@ -987,19 +987,19 @@ function editWidget(idx) {
 
         fieldsHtml += `
             <div class="mb-3">
-                <label class="form-label fw-bold small">বিজ্ঞাপন স্লট নির্বাচন করুন</label>
+                <label class="form-label fw-bold small">Select Advertisement Slot</label>
                 <select class="form-select form-select-sm" id="edit_ad_position">${adOptions}</select>
-                <small class="text-muted">বিজ্ঞাপনের ছবি বা লিঙ্ক পরিবর্তন করতে <a href="ads-manager.php" target="_blank">বিজ্ঞাপন ব্যানার নিয়ন্ত্রণ</a> পেজে যান।</small>
+                <small class="text-muted">To manage banner images or target URLs, visit <a href="ads-manager.php" target="_blank">Advertisement Banners</a>.</small>
             </div>
             <div class="mb-3">
-                <label class="form-label fw-bold small">অথবা কাস্টম অ্যাড কোড (ঐচ্ছিক)</label>
-                <textarea class="form-control font-monospace small" id="edit_ad_custom_code" rows="3" placeholder="<div ...> বা গুগল অ্যাডসেন্স কোড">${escapeHtml(s.custom_code || '')}</textarea>
+                <label class="form-label fw-bold small">Or Custom Ad Code (Optional)</label>
+                <textarea class="form-control font-monospace small" id="edit_ad_custom_code" rows="3" placeholder="<div ...> or Google AdSense code">${escapeHtml(s.custom_code || '')}</textarea>
             </div>
         `;
     } else if (w.type === 'sidebar_tabs') {
         fieldsHtml += `
             <div class="mb-3">
-                <label class="form-label fw-bold small">সংবাদের সংখ্যা (প্রতি ট্যাবে)</label>
+                <label class="form-label fw-bold small">Posts Limit (per tab)</label>
                 <input type="number" class="form-control form-control-sm" id="edit_limit" value="${s.limit || 7}" min="3" max="15" style="max-width: 150px;">
             </div>
         `;
@@ -1007,11 +1007,11 @@ function editWidget(idx) {
         fieldsHtml += `
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                    <label class="form-label fw-bold small">প্রধান লিডের নিচের থাম্ব সংখ্যা</label>
+                    <label class="form-label fw-bold small">Bottom Thumbnails Count</label>
                     <input type="number" class="form-control form-control-sm" id="edit_bottom_thumbs" value="${s.bottom_thumbs || 3}" min="0" max="6">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold small">ডানপাশের সাব-লিড সংখ্যা</label>
+                    <label class="form-label fw-bold small">Right Sub-leads Count</label>
                     <input type="number" class="form-control form-control-sm" id="edit_sub_leads" value="${s.sub_leads || 3}" min="1" max="6">
                 </div>
             </div>
@@ -1019,14 +1019,14 @@ function editWidget(idx) {
     } else if (w.type === 'custom_html') {
         fieldsHtml += `
             <div class="mb-3">
-                <label class="form-label fw-bold small">কাস্টম এইচটিএমএল / এম্বেড কোড</label>
-                <textarea class="form-control font-monospace small" id="edit_html_content" rows="6" placeholder="<div>কাস্টম কোড...</div>">${escapeHtml(s.content || '')}</textarea>
+                <label class="form-label fw-bold small">Custom HTML / Embed Code</label>
+                <textarea class="form-control font-monospace small" id="edit_html_content" rows="6" placeholder="<div>Custom HTML...</div>">${escapeHtml(s.content || '')}</textarea>
             </div>
         `;
     } else if (w.type === 'multimedia_gallery') {
         fieldsHtml += `
             <div class="mb-3">
-                <label class="form-label fw-bold small">গ্যালারি আইটেম সংখ্যা</label>
+                <label class="form-label fw-bold small">Gallery Items Count</label>
                 <input type="number" class="form-control form-control-sm" id="edit_limit" value="${s.limit || 4}" min="2" max="8" style="max-width: 150px;">
             </div>
         `;
@@ -1083,7 +1083,7 @@ function applyWidgetSettings() {
     const modal = bootstrap.Modal.getInstance(modalEl);
     if (modal) modal.hide();
 
-    showToast('উইজেট কনফিগারেশন আপডেট হয়েছে।');
+    showToast('Widget settings updated.');
 }
 
 /**
@@ -1093,7 +1093,7 @@ let previewDebounceTimer = null;
 function updateLivePreview() {
     const syncBadge = document.getElementById('liveSyncStatus');
     if (syncBadge) {
-        syncBadge.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" style="width: 8px; height: 8px;"></span>সিঙ্ক হচ্ছে...`;
+        syncBadge.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" style="width: 8px; height: 8px;"></span>Syncing...`;
         syncBadge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle d-inline-flex align-items-center gap-1';
     }
 
@@ -1114,14 +1114,14 @@ function updateLivePreview() {
         .then(html => {
             iframe.srcdoc = html;
             if (syncBadge) {
-                syncBadge.innerHTML = `<span class="spinner-grow spinner-grow-sm text-success" style="width: 7px; height: 7px;"></span>সিঙ্ক সক্রিয়`;
+                syncBadge.innerHTML = `<span class="spinner-grow spinner-grow-sm text-success" style="width: 7px; height: 7px;"></span>Sync Active`;
                 syncBadge.className = 'badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1';
             }
         })
         .catch(err => {
             console.error('Preview sync failed:', err);
             if (syncBadge) {
-                syncBadge.innerHTML = `<i class="bi bi-exclamation-triangle text-danger"></i>সিঙ্ক সমস্যা`;
+                syncBadge.innerHTML = `<i class="bi bi-exclamation-triangle text-danger"></i>Sync Issue`;
                 syncBadge.className = 'badge bg-danger-subtle text-danger border border-danger-subtle d-inline-flex align-items-center gap-1';
             }
         });
@@ -1133,7 +1133,7 @@ function updateLivePreview() {
  */
 function refreshLivePreview() {
     updateLivePreview();
-    showToast('লাইভ প্রিভিউ রিফ্রেশ করা হয়েছে।');
+    showToast('Live preview refreshed.');
 }
 
 /**
@@ -1205,7 +1205,7 @@ function saveLayout() {
     const btn = document.getElementById('btnSaveLayout');
     const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>সংরক্ষণ হচ্ছে...`;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Saving...`;
 
     const formData = new FormData();
     formData.append('action', 'save_layout');
@@ -1221,16 +1221,16 @@ function saveLayout() {
         btn.disabled = false;
         btn.innerHTML = originalText;
         if (data.success) {
-            showToast(data.message || 'লেআউট সফলভাবে সংরক্ষিত হয়েছে!');
+            showToast(data.message || 'Layout saved successfully!');
             updateLivePreview();
         } else {
-            alert(data.message || 'লেআউট সংরক্ষণে সমস্যা হয়েছে');
+            alert(data.message || 'Error saving layout');
         }
     })
     .catch(err => {
         btn.disabled = false;
         btn.innerHTML = originalText;
-        alert('সার্ভার যোগাযোগে সমস্যা হয়েছে: ' + err.message);
+        alert('Server communication error: ' + err.message);
     });
 }
 
@@ -1288,7 +1288,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentWidgets.splice(newIndex, 0, movedItem);
                 renderCanvas();
                 updateLivePreview();
-                showToast('উইজেটের ক্রম পরিবর্তিত হয়েছে। লাইভ প্রিভিউ আপডেট হয়েছে।');
+                showToast('Widget order updated. Live preview refreshed.');
             }
         }
     });

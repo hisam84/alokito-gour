@@ -29,12 +29,13 @@ body {
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    transition: transform 0.3s ease;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
+    overflow-x: hidden;
     z-index: 1040;
 }
 
 .admin-sidebar .sidebar-brand {
-    padding: 20px;
+    padding: 18px 20px;
     font-size: 1.15rem;
     font-weight: 700;
     color: #ffffff;
@@ -42,6 +43,13 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: padding 0.25s ease;
+}
+
+.admin-sidebar .sidebar-brand-text {
+    transition: opacity 0.2s ease;
 }
 
 .admin-sidebar .sidebar-brand img {
@@ -65,6 +73,8 @@ body {
     text-decoration: none;
     font-size: 0.95rem;
     transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .admin-sidebar .sidebar-menu li a:hover {
@@ -93,6 +103,7 @@ body {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    transition: margin-left 0.25s ease;
 }
 
 /* Top Navbar */
@@ -107,11 +118,90 @@ body {
 }
 
 .admin-topbar .btn-toggle-sidebar {
-    background: none;
-    border: none;
-    font-size: 1.35rem;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: #475569;
     cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.admin-topbar .btn-toggle-sidebar:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+/* Sidebar Collapsed State (Desktop >= 992px) */
+@media (min-width: 992px) {
+    html.sidebar-collapsed .admin-sidebar,
+    body.sidebar-collapsed .admin-sidebar {
+        width: 72px;
+    }
+
+    html.sidebar-collapsed .sidebar-brand,
+    body.sidebar-collapsed .sidebar-brand {
+        padding: 18px 0;
+        justify-content: center;
+    }
+
+    html.sidebar-collapsed .sidebar-brand-text,
+    body.sidebar-collapsed .sidebar-brand-text {
+        display: none !important;
+    }
+
+    html.sidebar-collapsed .sidebar-brand-icon,
+    body.sidebar-collapsed .sidebar-brand-icon {
+        margin: 0 !important;
+    }
+
+    html.sidebar-collapsed .sidebar-menu,
+    body.sidebar-collapsed .sidebar-menu {
+        padding: 10px 0;
+    }
+
+    html.sidebar-collapsed .sidebar-menu li a,
+    body.sidebar-collapsed .sidebar-menu li a {
+        justify-content: center;
+        padding: 14px 0;
+        gap: 0;
+    }
+
+    html.sidebar-collapsed .sidebar-menu li a span,
+    body.sidebar-collapsed .sidebar-menu li a span {
+        display: none !important;
+    }
+
+    html.sidebar-collapsed .sidebar-menu li a i,
+    body.sidebar-collapsed .sidebar-menu li a i {
+        font-size: 1.3rem;
+        margin: 0;
+    }
+
+    html.sidebar-collapsed .sidebar-menu .menu-header,
+    body.sidebar-collapsed .sidebar-menu .menu-header {
+        height: 1px;
+        padding: 0;
+        margin: 10px 14px;
+        background: rgba(255, 255, 255, 0.08);
+        font-size: 0;
+        color: transparent;
+        overflow: hidden;
+    }
+
+    html.sidebar-collapsed .sidebar-footer-text,
+    body.sidebar-collapsed .sidebar-footer-text {
+        display: none !important;
+    }
+
+    html.sidebar-collapsed .sidebar-footer-short,
+    body.sidebar-collapsed .sidebar-footer-short {
+        display: inline-block !important;
+    }
 }
 
 /* Page Body */
@@ -364,4 +454,3 @@ body {
     font-size: 1.15rem;
     flex-shrink: 0;
 }
-

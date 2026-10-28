@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS `settings` (
   `contact_email` VARCHAR(100) NULL DEFAULT 'editor@alokitogour.com',
   `facebook_url` VARCHAR(255) NULL DEFAULT 'https://facebook.com/alokitogour',
   `youtube_url` VARCHAR(255) NULL DEFAULT 'https://youtube.com/@alokitogour',
+  `ai_provider` VARCHAR(20) DEFAULT 'smart',
+  `gemini_api_key` VARCHAR(255) NULL,
+  `gemini_model` VARCHAR(50) DEFAULT 'gemini-1.5-flash',
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -63,6 +66,7 @@ CREATE TABLE IF NOT EXISTS `posts` (
   `sidebar_ad_image` VARCHAR(255) NULL,
   `sidebar_ad_url` VARCHAR(255) NULL,
   `sidebar_ad_code` TEXT NULL,
+  `keywords` VARCHAR(500) NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX (`category_id`),
   INDEX (`is_lead`),
@@ -76,7 +80,7 @@ CREATE TABLE IF NOT EXISTS `posts` (
 -- 5. Advertisements Table
 CREATE TABLE IF NOT EXISTS `advertisements` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `position` VARCHAR(50) NOT NULL UNIQUE,
+  `position` VARCHAR(50) DEFAULT 'none',
   `title` VARCHAR(100) NULL,
   `image_path` VARCHAR(255) NULL,
   `target_url` VARCHAR(255) NULL,

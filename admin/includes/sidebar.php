@@ -10,73 +10,80 @@ $currentScript = basename($_SERVER['PHP_SELF']);
 ?>
 <aside class="admin-sidebar">
     <div class="sidebar-brand">
-        <a href="index.php" class="text-white text-decoration-none d-flex align-items-center gap-2">
-            <i class="bi bi-newspaper fs-4 text-warning"></i>
-            <div>
-                <span class="d-block lh-1 text-white fw-bold">আলোকিত গৌড়</span>
-                <span class="d-block small text-warning" style="font-size:0.75rem;">কন্ট্রোল প্যানেল</span>
+        <a href="index.php" class="text-white text-decoration-none d-flex align-items-center gap-2" title="Alokito Gour Admin">
+            <i class="bi bi-newspaper fs-4 text-warning sidebar-brand-icon flex-shrink-0"></i>
+            <div class="sidebar-brand-text">
+                <span class="d-block lh-1 text-white fw-bold">Alokito Gour</span>
+                <span class="d-block small text-warning" style="font-size:0.75rem;">Control Panel</span>
             </div>
         </a>
     </div>
 
     <ul class="sidebar-menu">
         <li>
-            <a href="index.php" class="<?= $currentScript === 'index.php' ? 'active' : '' ?>">
+            <a href="index.php" class="<?= $currentScript === 'index.php' ? 'active' : '' ?>" title="Dashboard">
                 <i class="bi bi-speedometer2"></i>
-                <span>ড্যাশবোর্ড</span>
+                <span>Dashboard</span>
             </a>
         </li>
 
-        <li class="menu-header">সংবাদ ও কন্টেন্ট</li>
+        <li class="menu-header">News & Content</li>
         <li>
-            <a href="post-add.php" class="<?= $currentScript === 'post-add.php' ? 'active' : '' ?>">
+            <a href="post-add.php" class="<?= $currentScript === 'post-add.php' ? 'active' : '' ?>" title="Publish New Post">
                 <i class="bi bi-pencil-square"></i>
-                <span>নতুন সংবাদ প্রকাশ</span>
+                <span>Publish New Post</span>
             </a>
         </li>
         <li>
-            <a href="post-list.php" class="<?= in_array($currentScript, ['post-list.php', 'post-edit.php']) ? 'active' : '' ?>">
+            <a href="post-list.php" class="<?= in_array($currentScript, ['post-list.php', 'post-edit.php']) ? 'active' : '' ?>" title="All Posts List">
                 <i class="bi bi-card-list"></i>
-                <span>সকল সংবাদ তালিকা</span>
+                <span>All Posts List</span>
             </a>
         </li>
         <li>
-            <a href="categories.php" class="<?= $currentScript === 'categories.php' ? 'active' : '' ?>">
+            <a href="categories.php" class="<?= $currentScript === 'categories.php' ? 'active' : '' ?>" title="Categories">
                 <i class="bi bi-tags"></i>
-                <span>ক্যাটাগরি ব্যবস্থাপনা</span>
+                <span>Categories</span>
             </a>
         </li>
         <li>
-            <a href="page-builder.php" class="<?= $currentScript === 'page-builder.php' ? 'active' : '' ?>">
+            <a href="page-builder.php" class="<?= $currentScript === 'page-builder.php' ? 'active' : '' ?>" title="Page Builder">
                 <i class="bi bi-layout-text-window-reverse"></i>
-                <span>পেজ বিল্ডার (Page Builder)</span>
+                <span>Page Builder</span>
+            </a>
+        </li>
+        <li>
+            <a href="sidebar-manager.php" class="<?= $currentScript === 'sidebar-manager.php' ? 'active' : '' ?>" title="Sidebar Blocks">
+                <i class="bi bi-layout-sidebar-inset-reverse"></i>
+                <span>Sidebar Blocks</span>
             </a>
         </li>
 
-        <li class="menu-header">মার্কেটিং ও কনফিগারেশন</li>
+        <li class="menu-header">Marketing & Config</li>
         <li>
-            <a href="ads-manager.php" class="<?= $currentScript === 'ads-manager.php' ? 'active' : '' ?>">
+            <a href="ads-manager.php" class="<?= $currentScript === 'ads-manager.php' ? 'active' : '' ?>" title="Ad Banners">
                 <i class="bi bi-badge-ad"></i>
-                <span>বিজ্ঞাপন ব্যানার</span>
+                <span>Ad Banners</span>
             </a>
         </li>
         <li>
-            <a href="settings.php" class="<?= $currentScript === 'settings.php' ? 'active' : '' ?>">
+            <a href="settings.php" class="<?= $currentScript === 'settings.php' ? 'active' : '' ?>" title="Site Settings">
                 <i class="bi bi-sliders"></i>
-                <span>সাইট পরিচয় ও সেটিংস</span>
+                <span>Site Settings</span>
             </a>
         </li>
 
-        <li class="menu-header">অ্যাকাউন্ট</li>
+        <li class="menu-header">Account</li>
         <li>
-            <a href="logout.php" class="text-danger">
+            <a href="logout.php" class="text-danger" title="Logout">
                 <i class="bi bi-box-arrow-right"></i>
-                <span>লগআউট</span>
+                <span>Logout</span>
             </a>
         </li>
     </ul>
 
-    <div class="p-3 text-center border-top border-secondary text-muted small" style="font-size: 0.75rem;">
-        সংস্করণ ১.০.০ &bull; cPanel Ready
+    <div class="p-3 text-center border-top border-secondary text-muted small sidebar-footer" style="font-size: 0.75rem;">
+        <span class="sidebar-footer-text">Version 1.0.0 &bull; Production Ready</span>
+        <span class="sidebar-footer-short d-none">v1.0</span>
     </div>
 </aside>

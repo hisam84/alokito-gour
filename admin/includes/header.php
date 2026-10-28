@@ -8,10 +8,10 @@ declare(strict_types=1);
 
 $settings = get_settings();
 $adminName = $_SESSION['admin_user_name'] ?? 'Admin';
-$pageTitle = $pageTitle ?? 'অ্যাডমিন ড্যাশবোর্ড | আলোকিত গৌড়';
+$pageTitle = $pageTitle ?? 'Admin Dashboard | Alokito Gour';
 ?>
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -33,6 +33,15 @@ $pageTitle = $pageTitle ?? 'অ্যাডমিন ড্যাশবোর্
     <?php if (!empty($settings['favicon_path'])): ?>
     <link rel="shortcut icon" href="<?= e($settings['favicon_path']) ?>">
     <?php endif; ?>
+
+    <script>
+        // Check saved sidebar state immediately before render to prevent layout shift (FOUC)
+        try {
+            if (localStorage.getItem('admin_sidebar_collapsed') === 'true' && window.innerWidth >= 992) {
+                document.documentElement.classList.add('sidebar-collapsed');
+            }
+        } catch(e) {}
+    </script>
 </head>
 <body>
 
@@ -47,8 +56,8 @@ $pageTitle = $pageTitle ?? 'অ্যাডমিন ড্যাশবোর্
         <!-- Top Navbar -->
         <header class="admin-topbar">
             <div class="d-flex align-items-center gap-3">
-                <button type="button" class="btn-toggle-sidebar d-lg-none" id="sidebarToggle" aria-label="Toggle Sidebar">
-                    <i class="bi bi-list"></i>
+                <button type="button" class="btn-toggle-sidebar" id="sidebarToggle" aria-label="Toggle Sidebar" title="Collapse / Expand Sidebar">
+                    <i class="bi bi-list fs-4"></i>
                 </button>
                 <h5 class="mb-0 text-dark fw-bold d-none d-sm-block"><?= e($pageTitle) ?></h5>
             </div>
@@ -56,7 +65,7 @@ $pageTitle = $pageTitle ?? 'অ্যাডমিন ড্যাশবোর্
             <div class="d-flex align-items-center gap-3">
                 <a href="../index.php" target="_blank" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
                     <i class="bi bi-box-arrow-up-right"></i>
-                    <span class="d-none d-md-inline">সাইট দেখুন</span>
+                    <span class="d-none d-md-inline">View Website</span>
                 </a>
 
                 <div class="dropdown">
@@ -67,8 +76,8 @@ $pageTitle = $pageTitle ?? 'অ্যাডমিন ড্যাশবোর্
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
                         <li><span class="dropdown-item-text small text-muted"><?= e($_SESSION['admin_user_email'] ?? '') ?></span></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>সাইট সেটিংস</a></li>
-                        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>লগআউট</a></li>
+                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Site Settings</a></li>
+                        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
                 </div>
             </div>

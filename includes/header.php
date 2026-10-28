@@ -29,7 +29,7 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
     
     <title><?= $pageTitle ?></title>
     <meta name="description" content="<?= $metaDesc ?>">
-    <meta name="keywords" content="চাঁপাইনবাবগঞ্জ, রাজশাহী, বাংলা খবর, সর্বশেষ খবর, ব্রেকিং নিউজ, আলোকিত গৌড়">
+    <meta name="keywords" content="<?= !empty($metaKeywords) ? e($metaKeywords) : 'চাঁপাইনবাবগঞ্জ, রাজশাহী, বাংলা খবর, সর্বশেষ খবর, ব্রেকিং নিউজ, আলোকিত গৌড়' ?>">
     
     <!-- OpenGraph & Twitter Meta -->
     <meta property="og:title" content="<?= $pageTitle ?>">

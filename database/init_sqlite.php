@@ -32,6 +32,9 @@ try {
             `contact_email` TEXT NULL DEFAULT 'editor@alokitogour.com',
             `facebook_url` TEXT NULL DEFAULT 'https://facebook.com/alokitogour',
             `youtube_url` TEXT NULL DEFAULT 'https://youtube.com/@alokitogour',
+            `ai_provider` TEXT DEFAULT 'smart',
+            `gemini_api_key` TEXT NULL,
+            `gemini_model` TEXT DEFAULT 'gemini-1.5-flash',
             `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP
         );
     ");
@@ -78,6 +81,10 @@ try {
             `is_breaking` INTEGER DEFAULT 0,
             `views` INTEGER DEFAULT 0,
             `status` TEXT DEFAULT 'published',
+            `keywords` TEXT NULL,
+            `division` TEXT NULL,
+            `district` TEXT NULL,
+            `upazila` TEXT NULL,
             `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         CREATE INDEX IF NOT EXISTS idx_posts_cat ON `posts`(`category_id`);
@@ -89,9 +96,24 @@ try {
 
     // 5. Advertisements Table
     $pdo->exec("
+        
+        CREATE TABLE IF NOT EXISTS `sidebar_blocks` (
+            `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+            `title` VARCHAR(255) NOT NULL,
+            `block_type` VARCHAR(50) NOT NULL DEFAULT 'custom_html',
+            `content` TEXT NULL,
+            `page_target` VARCHAR(100) NOT NULL DEFAULT 'all',
+            `position_order` INTEGER NOT NULL DEFAULT 10,
+            `show_title` INTEGER NOT NULL DEFAULT 1,
+            `status` INTEGER NOT NULL DEFAULT 1,
+            `settings` TEXT NULL,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
         CREATE TABLE IF NOT EXISTS `advertisements` (
             `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-            `position` TEXT NOT NULL UNIQUE,
+            `position` TEXT DEFAULT 'none',
             `title` TEXT NULL,
             `image_path` TEXT NULL,
             `target_url` TEXT NULL,
