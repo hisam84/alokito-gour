@@ -57,6 +57,7 @@ function get_bn_date_str(?string $dateStr): string {
 
 $initialTitle = $preloadedPost['title'] ?? ($recentPosts[0]['title'] ?? 'বাংলাদেশ থেকে কর্মী নেবে ইরাক, চুক্তি সই');
 $initialDate = get_bn_date_str($preloadedPost['created_at'] ?? ($recentPosts[0]['created_at'] ?? null));
+$initialRawDate = date('Y-m-d', strtotime($preloadedPost['created_at'] ?? ($recentPosts[0]['created_at'] ?? 'now')));
 $initialThumb = $preloadedPost['thumbnail'] ?? ($recentPosts[0]['thumbnail'] ?? '');
 $initialPostId = $preloadedPost['id'] ?? ($recentPosts[0]['id'] ?? 0);
 
@@ -322,6 +323,7 @@ include __DIR__ . '/includes/header.php';
                                     data-title="<?= e($p['title']) ?>"
                                     data-thumb="<?= e($p['thumbnail'] ?? '') ?>"
                                     data-date="<?= e(get_bn_date_str($p['created_at'])) ?>"
+                                    data-raw-date="<?= e(date('Y-m-d', strtotime($p['created_at']))) ?>"
                                     <?= ($p['id'] == $initialPostId) ? 'selected' : '' ?>>
                                 #<?= (int)$p['id'] ?> &bull; <?= e(mb_substr($p['title'], 0, 65)) ?><?= mb_strlen($p['title']) > 65 ? '...' : '' ?>
                             </option>
@@ -403,10 +405,19 @@ include __DIR__ . '/includes/header.php';
                 <!-- Date Text & Settings -->
                 <div class="row g-3">
                     <div class="col-sm-8">
-                        <label for="cardDateInput" class="form-label-sm">Date Text (Ribbon)</label>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="cardDateInput" class="form-label-sm mb-0">Date Text (Ribbon)</label>
+                            <span class="text-muted" style="font-size:0.75rem;"><i class="bi bi-info-circle me-1"></i>ক্যালেন্ডারে ক্লিক করে তারিখ বাছুন</span>
+                        </div>
                         <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="bi bi-calendar3"></i></span>
-                            <input type="text" class="form-control" id="cardDateInput" value="<?= e($initialDate) ?>" style="font-family:'Hind Siliguri', sans-serif; font-weight:600;">
+                            <button class="btn btn-outline-secondary bg-light border" type="button" id="btnOpenCalendar" title="ক্যালেন্ডার থেকে তারিখ নির্বাচন করুন" style="cursor: pointer;">
+                                <i class="bi bi-calendar-event text-primary fs-6"></i>
+                            </button>
+                            <input type="text" class="form-control" id="cardDateInput" value="<?= e($initialDate) ?>" placeholder="যেমন: ২৮ অক্টোবর ২০২৬" style="font-family:'Hind Siliguri', sans-serif; font-weight:600;">
+                            <input type="date" id="nativeDatePicker" class="d-none" value="<?= e($initialRawDate) ?>">
+                            <button class="btn btn-outline-secondary bg-light border" type="button" id="btnResetNewsDate" title="মূল নিউজের তারিখ ফিরিয়ে আনুন">
+                                <i class="bi bi-arrow-clockwise text-secondary"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="col-sm-4">
@@ -670,6 +681,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const newsSearch = document.getElementById('newsSearchInput');
     const titleInput = document.getElementById('cardTitleInput');
     const dateInput = document.getElementById('cardDateInput');
+    const btnOpenCalendar = document.getElementById('btnOpenCalendar');
+    const nativeDatePicker = document.getElementById('nativeDatePicker');
+    const btnResetNewsDate = document.getElementById('btnResetNewsDate');
     
     // Custom number inputs + Sliders
     const fontSizeRange = document.getElementById('fontSizeRange');
@@ -707,8 +721,63 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // State
     let currentNewsId = <?= $initialPostId ?>;
+    let currentNewsOriginalDateBn = <?= json_encode($initialDate) ?>;
+    let currentNewsOriginalRawDate = <?= json_encode($initialRawDate) ?>;
     let line1Color = '#FFE600';
     let line2Color = '#FFFFFF';
+
+    // Bengali Digits & Months for Date Formatting
+    const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+    const bnToEnMap = { '০':'0', '১':'1', '২':'2', '৩':'3', '৪':'4', '৫':'5', '৬':'6', '৭':'7', '৮':'8', '৯':'9' };
+    const monthsBnList = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+    const monthsBnMap = {
+        'জানুয়ারি': '01', 'জানুয়ারি': '01',
+        'ফেব্রুয়ারি': '02', 'ফেব্রুয়ারি': '02',
+        'মার্চ': '03',
+        'এপ্রিল': '04',
+        'মে': '05',
+        'জুন': '06',
+        'জুলাই': '07',
+        'আগস্ট': '08',
+        'সেপ্টেম্বর': '09',
+        'অক্টোবর': '10',
+        'নভেম্বর': '11',
+        'ডিসেম্বর': '12'
+    };
+
+    function toBengaliDigits(num) {
+        return String(num).replace(/[0-9]/g, d => bnDigits[d]);
+    }
+
+    // Convert ISO YYYY-MM-DD to Bengali string (e.g. 2026-10-28 -> ২৮ অক্টোবর ২০২৬)
+    function formatToBengaliDate(isoDateStr) {
+        if (!isoDateStr) return '';
+        const parts = isoDateStr.split('-');
+        if (parts.length < 3) return '';
+        const year = parts[0];
+        const monthIdx = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const bnDay = toBengaliDigits(day);
+        const bnMonth = monthsBnList[monthIdx] || '';
+        const bnYear = toBengaliDigits(year);
+        return `${bnDay} ${bnMonth} ${bnYear}`;
+    }
+
+    // Convert Bengali string back to YYYY-MM-DD for opening the calendar on correct date
+    function parseBengaliDateToIso(bnStr) {
+        if (!bnStr) return '';
+        const enStr = bnStr.replace(/[০-৯]/g, d => bnToEnMap[d] || d);
+        const parts = enStr.trim().split(/\s+/);
+        if (parts.length >= 3) {
+            const day = String(parts[0]).padStart(2, '0');
+            const month = monthsBnMap[parts[1]] || '01';
+            const year = parts[2];
+            if (year && year.length === 4) {
+                return `${year}-${month}-${day}`;
+            }
+        }
+        return '';
+    }
 
     let newsImage = new Image();
     newsImage.crossOrigin = 'anonymous';
@@ -1027,6 +1096,50 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     dateInput.addEventListener('input', renderCard);
 
+    // Native Calendar Picker Integration
+    if (btnOpenCalendar && nativeDatePicker) {
+        btnOpenCalendar.addEventListener('click', () => {
+            const currentIso = parseBengaliDateToIso(dateInput.value);
+            if (currentIso) {
+                nativeDatePicker.value = currentIso;
+            }
+            if (typeof nativeDatePicker.showPicker === 'function') {
+                try {
+                    nativeDatePicker.showPicker();
+                    return;
+                } catch (e) {
+                    // Fallback to click
+                }
+            }
+            nativeDatePicker.click();
+        });
+
+        nativeDatePicker.addEventListener('change', function() {
+            if (this.value) {
+                const bnFormatted = formatToBengaliDate(this.value);
+                if (bnFormatted) {
+                    dateInput.value = bnFormatted;
+                    renderCard();
+                    showToast('ক্যালেন্ডার থেকে তারিখ নির্বাচিত হয়েছে: ' + bnFormatted, 'success');
+                }
+            }
+        });
+    }
+
+    // Reset Date to Selected News Original Publication Date
+    if (btnResetNewsDate) {
+        btnResetNewsDate.addEventListener('click', () => {
+            if (currentNewsOriginalDateBn) {
+                dateInput.value = currentNewsOriginalDateBn;
+                if (nativeDatePicker && currentNewsOriginalRawDate) {
+                    nativeDatePicker.value = currentNewsOriginalRawDate.split(' ')[0];
+                }
+                renderCard();
+                showToast('মূল নিউজের প্রকাশ তারিখ ফিরিয়ে আনা হয়েছে', 'info');
+            }
+        });
+    }
+
     // Color Pickers & Chips
     line1ColorPicker.addEventListener('input', (e) => {
         line1Color = e.target.value;
@@ -1115,7 +1228,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (opt) {
             currentNewsId = opt.value;
             titleInput.value = opt.getAttribute('data-title') || '';
-            dateInput.value = opt.getAttribute('data-date') || '';
+
+            // Automatically set publish date of the selected news
+            const postDateBn = opt.getAttribute('data-date') || '';
+            const postRawDate = opt.getAttribute('data-raw-date') || '';
+            dateInput.value = postDateBn;
+            currentNewsOriginalDateBn = postDateBn;
+            currentNewsOriginalRawDate = postRawDate;
+            if (nativeDatePicker && postRawDate) {
+                nativeDatePicker.value = postRawDate.split(' ')[0];
+            }
+
             const thumb = opt.getAttribute('data-thumb');
             if (thumb) {
                 setNewsImageSrc(thumb);
@@ -1151,10 +1274,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                 opt.setAttribute('data-title', p.title);
                                 opt.setAttribute('data-thumb', p.thumbnail);
                                 opt.setAttribute('data-date', p.date_bn);
+                                opt.setAttribute('data-raw-date', p.created_at ? p.created_at.split(' ')[0] : '');
                                 opt.textContent = `#${p.id} • ${p.title.substring(0, 65)}${p.title.length > 65 ? '...' : ''}`;
                                 if (idx === 0) opt.selected = true;
                                 newsSelect.appendChild(opt);
                             });
+                            // Automatically select first matching news and update headline + date
+                            newsSelect.dispatchEvent(new Event('change'));
                         }
                     }
                 })
@@ -1457,8 +1583,15 @@ document.addEventListener('DOMContentLoaded', function() {
             title: 'Publication Date',
             render: () => `
                 <div class="mb-3">
-                    <label class="form-label-sm">Date Text (Ribbon)</label>
-                    <input type="text" class="form-control" id="mDateInput" value="${dateInput.value}">
+                    <label class="form-label-sm mb-1">Date Text (Ribbon)</label>
+                    <div class="input-group">
+                        <button type="button" class="btn btn-outline-primary bg-light border" id="mBtnOpenCalendar" title="ক্যালেন্ডার খুলুন">
+                            <i class="bi bi-calendar-event text-primary"></i>
+                        </button>
+                        <input type="text" class="form-control" id="mDateInput" value="${dateInput.value}" placeholder="যেমন: ২৮ অক্টোবর ২০২৬">
+                        <input type="date" id="mNativeDatePicker" class="d-none" value="${nativeDatePicker ? nativeDatePicker.value : ''}">
+                    </div>
+                    <div class="form-text small text-muted">ক্যালেন্ডার আইকনে চাপ দিয়ে নতুন তারিখ নির্বাচন করতে পারবেন।</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label-sm">Date Size: <span id="mDateSizeVal">${dateSizeNumber.value}px</span></label>
@@ -1467,12 +1600,40 @@ document.addEventListener('DOMContentLoaded', function() {
             `,
             bind: () => {
                 const mDate = document.getElementById('mDateInput');
+                const mBtnCal = document.getElementById('mBtnOpenCalendar');
+                const mNative = document.getElementById('mNativeDatePicker');
                 const mDateSize = document.getElementById('mDateSizeRange');
                 const mDateSizeVal = document.getElementById('mDateSizeVal');
+
                 mDate.addEventListener('input', () => {
                     dateInput.value = mDate.value;
                     dateInput.dispatchEvent(new Event('input'));
                 });
+
+                if (mBtnCal && mNative) {
+                    mBtnCal.addEventListener('click', () => {
+                        const currentIso = parseBengaliDateToIso(mDate.value);
+                        if (currentIso) mNative.value = currentIso;
+                        if (typeof mNative.showPicker === 'function') {
+                            try { mNative.showPicker(); return; } catch(e){}
+                        }
+                        mNative.click();
+                    });
+
+                    mNative.addEventListener('change', () => {
+                        if (mNative.value) {
+                            const bn = formatToBengaliDate(mNative.value);
+                            if (bn) {
+                                mDate.value = bn;
+                                dateInput.value = bn;
+                                if (nativeDatePicker) nativeDatePicker.value = mNative.value;
+                                dateInput.dispatchEvent(new Event('input'));
+                                showToast('তারিখ পরিবর্তন হয়েছে: ' + bn, 'success');
+                            }
+                        }
+                    });
+                }
+
                 mDateSize.addEventListener('input', () => {
                     dateSizeRange.value = mDateSize.value;
                     dateSizeNumber.value = mDateSize.value;
