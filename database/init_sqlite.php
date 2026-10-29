@@ -125,7 +125,7 @@ try {
     // Check if data already seeded
     $userCount = (int)$pdo->query("SELECT COUNT(*) FROM `users`")->fetchColumn();
     if ($userCount === 0) {
-        // Insert Superadmin (Password: admin123)
+        // Insert Superadmin account
         $superAdminHash = '$2y$10$F4sLiEzdYD85R5D5iXBtJucWJlWrqXatkKPfb5mi8nAkuq/ljZFEi';
         $userStmt = $pdo->prepare("INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `status`) VALUES (1, 'Super Admin', 'admin@alokitogour.com', :pwd, 'superadmin', 1)");
         $userStmt->execute([':pwd' => $superAdminHash]);

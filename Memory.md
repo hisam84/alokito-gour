@@ -33,7 +33,7 @@
   - Password: `` (empty in standard XAMPP/WAMP/local dev)
 - **Default Superadmin Account**:
   - Email: `admin@alokitogour.com`
-  - Password: `admin123`
+  - Password: `[Protected]`
 - **Required File Permissions (cPanel)**:
   - `/assets/uploads/` -> `0755`
   - `/assets/uploads/news/` -> `0755`

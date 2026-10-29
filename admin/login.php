@@ -142,7 +142,7 @@ $settings = get_settings();
                 <label for="email" class="form-label text-secondary small fw-medium">Email Address</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
-                    <input type="email" class="form-control" id="email" name="email" value="<?= e($_POST['email'] ?? 'admin@alokitogour.com') ?>" required autofocus>
+                    <input type="email" class="form-control" id="email" name="email" value="<?= e($_POST['email'] ?? '') ?>" placeholder="name@example.com" required autofocus>
                 </div>
             </div>
 
@@ -152,7 +152,7 @@ $settings = get_settings();
                     <span class="input-group-text bg-light text-muted"><i class="bi bi-shield-lock"></i></span>
                     <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
                 </div>
-                <div class="form-text small text-muted">Default password: <code>admin123</code></div>
+
             </div>
 
             <button type="submit" class="btn btn-brand w-100 py-2">

@@ -45,7 +45,7 @@ An authentic, high-performance, and responsive clone of the popular Bengali news
 
 ### Default Admin Credentials (ডিফল্ট এডমিন লগইন)
 - **Email**: `admin@alokitogour.com`
-- **Password**: `admin123`
+- **Password**: `[Protected / Configured during setup]`
 
 ---
 
