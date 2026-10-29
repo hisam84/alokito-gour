@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: alokito-gour
+    runtime: docker
+    plan: free
+    region: singapore
+    envVars:
+      - key: DB_DRIVER
+        value: sqlite
+

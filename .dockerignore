@@ -1,0 +1,15 @@
+.git
+.gitignore
+*.md
+scratch/
+tools/
+*.bat
+*.sh
+*.bak
+*.tmp
+php-temp.zip
+php/
+setup.sql
+.vscode/
+.idea/
+

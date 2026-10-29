@@ -10,7 +10,7 @@ ServerSignature Off
     RewriteBase /
 
     # Block sensitive system files and documentation from public HTTP access
-    RewriteRule ^(\.git|setup\.sql|\.env|.*\.md) - [F,L,NC]
+    RewriteRule ^(\.git|setup\.sql|\.env|.*\.md|.*\.sqlite) - [F,L,NC]
 
     # Clean URL for Single News: /news/{id}/{slug} -> single.php?id=$1&slug=$2
     RewriteRule ^news/([0-9]+)/?([^/]+)?/?$ single.php?id=$1&slug=$2 [L,QSA]

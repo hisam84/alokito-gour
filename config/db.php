@@ -27,7 +27,10 @@ define('DB_CHARSET', 'utf8mb4');
 define('SQLITE_FILE', dirname(__DIR__) . '/database/alokito_gour.sqlite');
 
 // Site URL configuration
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || ($_SERVER['SERVER_PORT'] ?? 80) == 443) ? "https://" : "http://";
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (($_SERVER['SERVER_PORT'] ?? 80) == 443)
+    || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+$protocol = $isHttps ? "https://" : "http://";
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 define('SITE_URL', rtrim($protocol . $host, '/'));
 
@@ -50,7 +53,14 @@ function get_db(): PDO {
             $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             return $pdo;
         } catch (PDOException $e) {
-            // Fall through to try MySQL if SQLite fails
+            if ($driver === 'sqlite') {
+                die('<div style="font-family:sans-serif;padding:30px;line-height:1.6;max-width:650px;margin:40px auto;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;">
+                    <h2 style="color:#e11d48;margin-top:0;">SQLite Connection Error</h2>
+                    <p>Could not open SQLite database at <code>' . htmlspecialchars(SQLITE_FILE) . '</code>.</p>
+                    <small style="color:#64748b;">Error: ' . htmlspecialchars($e->getMessage()) . '</small>
+                </div>');
+            }
+            // Fall through to try MySQL if auto mode
         }
     }
 

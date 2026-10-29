@@ -18,7 +18,8 @@ $metaDesc = !empty($metaDescription) ? e($metaDescription) : e($settings['site_t
 $metaImg = !empty($metaImage) ? e($metaImage) : (!empty($settings['logo_path']) ? e($settings['logo_path']) : '');
 $hostName = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $reqUri = $_SERVER['REQUEST_URI'] ?? '/';
-$currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://{$hostName}{$reqUri}";
+$isReqHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || ((isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https'));
+$currentUrl = ($isReqHttps ? "https" : "http") . "://{$hostName}{$reqUri}";
 ?>
 <!DOCTYPE html>
 <html lang="bn">
