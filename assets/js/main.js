@@ -25,28 +25,4 @@ document.addEventListener('DOMContentLoaded', function () {
             if (input) input.focus();
         });
     }
-
-    // Keep video gallery counters in sync and pause the previous YouTube video.
-    const bengaliDigits = '০১২৩৪৫৬৭৮৯';
-    document.querySelectorAll('[data-video-gallery-carousel]').forEach(function (carousel) {
-        carousel.addEventListener('slide.bs.carousel', function () {
-            const activeIframe = carousel.querySelector('.carousel-item.active iframe');
-            if (activeIframe && activeIframe.contentWindow) {
-                activeIframe.contentWindow.postMessage(JSON.stringify({
-                    event: 'command',
-                    func: 'pauseVideo',
-                    args: []
-                }), 'https://www.youtube.com');
-            }
-        });
-
-        carousel.addEventListener('slid.bs.carousel', function (event) {
-            const current = carousel.querySelector('[data-video-gallery-current]');
-            if (current && Number.isInteger(event.to)) {
-                current.textContent = String(event.to + 1).replace(/\d/g, function (digit) {
-                    return bengaliDigits[digit];
-                });
-            }
-        });
-    });
 });
