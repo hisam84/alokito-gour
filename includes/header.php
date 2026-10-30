@@ -20,6 +20,29 @@ $hostName = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $reqUri = $_SERVER['REQUEST_URI'] ?? '/';
 $isReqHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || ((isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https'));
 $currentUrl = ($isReqHttps ? "https" : "http") . "://{$hostName}{$reqUri}";
+
+// Bangla calendar date used in the reference site's header.
+$headerToday = new DateTimeImmutable('now');
+$headerYear = (int)$headerToday->format('Y');
+$banglaYearStart = new DateTimeImmutable($headerYear . '-04-14');
+if ($headerToday < $banglaYearStart) {
+    $banglaYearStart = new DateTimeImmutable(($headerYear - 1) . '-04-14');
+}
+$banglaYear = (int)$banglaYearStart->format('Y') - 593;
+$falgunYear = (int)$banglaYearStart->format('Y') + 1;
+$isFalgunLeapYear = checkdate(2, 29, $falgunYear);
+$banglaMonths = ['বৈশাখ', 'জ্যৈষ্ঠ', 'আষাঢ়', 'শ্রাবণ', 'ভাদ্র', 'আশ্বিন', 'কার্তিক', 'অগ্রহায়ণ', 'পৌষ', 'মাঘ', 'ফাল্গুন', 'চৈত্র'];
+$banglaMonthLengths = [31, 31, 31, 31, 31, 30, 30, 30, 30, 30, $isFalgunLeapYear ? 31 : 30, 30];
+$banglaDayOffset = (int)$banglaYearStart->diff($headerToday)->format('%a');
+$banglaCalendarDate = '';
+foreach ($banglaMonths as $monthIndex => $banglaMonth) {
+    if ($banglaDayOffset < $banglaMonthLengths[$monthIndex]) {
+        $banglaCalendarDate = bn_number($banglaDayOffset + 1) . ' ' . $banglaMonth . ' ' . bn_number($banglaYear);
+        break;
+    }
+    $banglaDayOffset -= $banglaMonthLengths[$monthIndex];
+}
+$headerEmail = 'alokitogour@gmail.com';
 ?>
 <!DOCTYPE html>
 <html lang="bn">
@@ -60,48 +83,57 @@ $currentUrl = ($isReqHttps ? "https" : "http") . "://{$hostName}{$reqUri}";
 </head>
 <body>
 
-<!-- Top Bar -->
+<!-- Reference-style Top Bar -->
 <div class="site-topbar">
     <div class="container">
-        <div class="d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-calendar-event text-warning"></i>
-                <span><?= bn_date(time(), false) ?></span>
+        <div class="topbar-main">
+            <div class="topbar-info">
+                <a href="mailto:<?= e($headerEmail) ?>" class="header-email">
+                    <i class="bi bi-envelope"></i>
+                    <span><?= e($headerEmail) ?></span>
+                </a>
+                <span class="topbar-date">
+                    <i class="bi bi-calendar-event"></i>
+                    <?= bn_date(time(), false) ?>
+                </span>
+                <span class="topbar-date topbar-bangla-date"><?= e($banglaCalendarDate) ?></span>
             </div>
 
-            <div class="d-flex align-items-center gap-3">
-                <div class="social-icons d-none d-sm-block">
+            <div class="topbar-actions">
+                <div class="social-icons">
                     <?php if (!empty($settings['facebook_url'])): ?>
-                        <a href="<?= e($settings['facebook_url']) ?>" target="_blank" rel="noopener" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="<?= e($settings['facebook_url']) ?>" target="_blank" rel="noopener" aria-label="Facebook" class="social-facebook"><i class="bi bi-facebook"></i></a>
                     <?php endif; ?>
+                    <a href="https://twitter.com/" target="_blank" rel="noopener" aria-label="Twitter" class="social-twitter"><i class="bi bi-twitter"></i></a>
                     <?php if (!empty($settings['youtube_url'])): ?>
-                        <a href="<?= e($settings['youtube_url']) ?>" target="_blank" rel="noopener" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+                        <a href="<?= e($settings['youtube_url']) ?>" target="_blank" rel="noopener" aria-label="YouTube" class="social-youtube"><i class="bi bi-youtube"></i></a>
                     <?php endif; ?>
                 </div>
-                <a href="/admin/login.php" class="text-muted small border-start ps-3" title="অ্যাডমিন প্যানেল"><i class="bi bi-lock me-1"></i>লগইন</a>
+                <button type="button" class="header-search" data-bs-toggle="modal" data-bs-target="#searchModal" aria-label="সংবাদ অনুসন্ধান">
+                    <i class="bi bi-search"></i>
+                </button>
+                <a href="https://alokitogour.com/video-gallery/gallery/video" class="header-video-link">
+                    <i class="bi bi-camera-video"></i>
+                    <span>ভিডিও</span>
+                </a>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Main Branding Header -->
+<!-- Reference-style Main Branding Header -->
 <header class="site-header">
     <div class="container">
-        <div class="row align-items-center g-3">
-            <div class="col-md-4 text-center text-md-start">
-                <a href="/" class="brand-logo d-inline-block">
-                    <?php if (!empty($settings['logo_path'])): ?>
-                        <img src="<?= e($settings['logo_path']) ?>" alt="<?= e($siteTitle) ?>" class="img-fluid">
-                    <?php else: ?>
-                        <h2 class="fw-bold text-dark mb-0">আলোকিত গৌড়</h2>
-                    <?php endif; ?>
-                </a>
-                <?php if (!empty($settings['site_tagline'])): ?>
-                    <p class="small text-muted mb-0 mt-1 d-none d-md-block"><?= e($settings['site_tagline']) ?></p>
+        <div class="header-branding">
+            <a href="/" class="brand-logo" aria-label="আলোকিত গৌড় - প্রচ্ছদ">
+                <?php if (!empty($settings['logo_path'])): ?>
+                    <img src="<?= e($settings['logo_path']) ?>" alt="আলোকিত গৌড়">
+                <?php else: ?>
+                    <span class="brand-logo-fallback">আলোকিত গৌড়</span>
                 <?php endif; ?>
-            </div>
+            </a>
 
-            <div class="col-md-8 text-center text-md-end">
+            <div class="header-ad">
                 <?= render_ad('header_right') ?>
             </div>
         </div>

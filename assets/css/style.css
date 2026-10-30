@@ -38,44 +38,225 @@ a:hover {
 }
 
 /* ========================================================
-   TOP BAR
+   REFERENCE HEADER: DATE, CONTACT & SOCIAL LINKS
    ======================================================== */
 .site-topbar {
-    background-color: #f1f5f9;
-    border-bottom: 1px solid var(--border-light);
-    font-size: 0.875rem;
-    padding: 6px 0;
-    color: var(--text-muted);
+    background-color: #f4f4f4;
+    border-bottom: 1px solid #e5e5e5;
+    color: #444444;
+    font-size: 13px;
+    line-height: 1.4;
+    padding: 7px 0;
 }
 
-.site-topbar .social-icons a {
-    color: var(--text-muted);
-    font-size: 1rem;
-    margin-left: 10px;
-    transition: color 0.2s ease;
+.site-topbar .topbar-main,
+.site-topbar .topbar-info,
+.site-topbar .topbar-actions,
+.site-topbar .social-icons {
+    display: flex;
+    align-items: center;
 }
 
-.site-topbar .social-icons a:hover {
+.site-topbar .topbar-main {
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.site-topbar .topbar-info {
+    flex-wrap: wrap;
+    gap: 8px 22px;
+}
+
+.site-topbar .header-email,
+.site-topbar .topbar-date,
+.site-topbar .header-video-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.site-topbar .header-email {
+    color: #555555;
+    font-style: italic;
+}
+
+.site-topbar .header-email i,
+.site-topbar .topbar-date i,
+.site-topbar .header-video-link i {
     color: var(--brand-primary);
 }
 
+.site-topbar .topbar-bangla-date {
+    color: #666666;
+}
+
+.site-topbar .topbar-actions {
+    flex-shrink: 0;
+    gap: 13px;
+}
+
+.site-topbar .social-icons {
+    gap: 11px;
+}
+
+.site-topbar .social-icons a {
+    display: inline-flex;
+    align-items: center;
+    font-size: 15px;
+    line-height: 1;
+}
+
+.site-topbar .social-icons .social-facebook {
+    color: #1877f2;
+}
+
+.site-topbar .social-icons .social-twitter {
+    color: #1da1f2;
+}
+
+.site-topbar .social-icons .social-youtube {
+    color: #ff0000;
+}
+
+.site-topbar .social-icons a:hover,
+.site-topbar .header-email:hover,
+.site-topbar .header-video-link:hover {
+    color: var(--brand-primary);
+}
+
+.site-topbar .header-search {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #555555;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.site-topbar .header-search:hover {
+    color: var(--brand-primary);
+}
+
+.site-topbar .header-video-link {
+    color: #333333;
+    font-weight: 600;
+}
+
 /* ========================================================
-   HEADER & BRANDING
+   REFERENCE HEADER: LOGO & LEADERBOARD
    ======================================================== */
 .site-header {
     background-color: #ffffff;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--border-light);
+    padding: 15px 0;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.site-header .header-branding {
+    display: grid;
+    grid-template-columns: minmax(210px, 1fr) minmax(0, 2.2fr);
+    align-items: center;
+    gap: 30px;
+}
+
+.site-header .brand-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    line-height: 0;
 }
 
 .site-header .brand-logo img {
-    max-height: 75px;
+    display: block;
     width: auto;
+    max-width: 300px;
+    max-height: 88px;
+    object-fit: contain;
 }
 
-@media (max-width: 768px) {
+.site-header .brand-logo-fallback {
+    color: #222222;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.site-header .header-ad {
+    width: 100%;
+    min-width: 0;
+}
+
+.site-header .header-ad .ad-container {
+    margin-bottom: 0 !important;
+}
+
+.site-header .header-ad .ad-container img {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 90px;
+    object-fit: contain;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+@media (max-width: 767.98px) {
+    .site-topbar {
+        padding: 8px 0;
+    }
+
+    .site-topbar .topbar-main {
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .site-topbar .topbar-info {
+        justify-content: center;
+        gap: 6px 14px;
+    }
+
+    .site-topbar .topbar-actions {
+        justify-content: center;
+    }
+
+    .site-header {
+        padding: 12px 0;
+    }
+
+    .site-header .header-branding {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .site-header .brand-logo {
+        justify-self: center;
+    }
+
     .site-header .brand-logo img {
-        max-height: 48px;
+        max-width: 245px;
+        max-height: 66px;
+    }
+
+    .site-header .header-ad .ad-container img {
+        max-height: 80px;
+    }
+}
+
+@media (max-width: 420px) {
+    .site-topbar {
+        font-size: 12px;
+    }
+
+    .site-topbar .topbar-info {
+        column-gap: 10px;
+    }
+
+    .site-header .brand-logo img {
+        max-width: 215px;
+        max-height: 58px;
     }
 }
 
