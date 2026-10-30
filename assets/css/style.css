@@ -830,6 +830,60 @@ a:hover {
 .share-copy { background-color: #64748b; }
 
 /* ========================================================
+   YOUTUBE VIDEO GALLERY CAROUSEL
+   ======================================================== */
+.video-gallery-section .video-gallery-carousel {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.video-gallery-carousel .carousel-inner {
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.video-gallery-carousel iframe {
+    display: block;
+    border: 0;
+}
+
+.video-gallery-carousel .carousel-control-prev,
+.video-gallery-carousel .carousel-control-next {
+    width: 8%;
+    opacity: 0.9;
+}
+
+.video-gallery-carousel .carousel-control-prev-icon,
+.video-gallery-carousel .carousel-control-next-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    background-color: rgba(0, 0, 0, 0.68);
+    background-size: 45%;
+    border-radius: 50%;
+}
+
+.video-gallery-counter {
+    min-height: 1.5rem;
+}
+
+.video-gallery-empty {
+    border: 1px dashed rgba(255, 255, 255, 0.22);
+    border-radius: 0.5rem;
+}
+
+@media (max-width: 575.98px) {
+    .video-gallery-section h4 {
+        font-size: 1.15rem;
+    }
+
+    .video-gallery-carousel .carousel-control-prev-icon,
+    .video-gallery-carousel .carousel-control-next-icon {
+        width: 2rem;
+        height: 2rem;
+    }
+}
+
+/* ========================================================
    FOOTER
    ======================================================== */
 .site-footer {

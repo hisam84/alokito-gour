@@ -518,48 +518,79 @@ function render_widget_full_width_split(array $widget, PDO $db): string {
 }
 
 /**
- * Render Multimedia Gallery Widget
+ * Render a YouTube-only video gallery as an automatic Bootstrap carousel.
  */
 function render_widget_multimedia_gallery(array $widget, PDO $db): string {
-    $settings = $widget['settings'] ?? [];
-    $title = !empty($widget['title']) ? $widget['title'] : ($settings['title'] ?? 'ছবি ও ভিডিও গ্যালারি');
+    $widget = normalize_video_gallery_widget($widget);
+    $title = $widget['title'];
+    $videos = [];
 
-    $galleryItems = [
-        [
-            'title' => 'চাঁপাইনবাবগঞ্জে পরিচ্ছন্নতা অভিযান',
-            'image' => 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=500&q=80',
-        ],
-        [
-            'title' => 'জেলা গোল্ডকাপ ফুটবল টুর্নামেন্ট',
-            'image' => 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=500&q=80',
-        ],
-        [
-            'title' => 'ঐতিহ্যবাহী লোকজ যাত্রাপালা মঞ্চায়ন',
-            'image' => 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=500&q=80',
-        ],
-        [
-            'title' => 'কক্সবাজার আন্তর্জাতিক বিমানবন্দর উন্নয়ন',
-            'image' => 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=500&q=80',
-        ],
-    ];
+    foreach ($widget['settings']['youtube_videos'] as $videoUrl) {
+        $videoId = youtube_video_id_from_url($videoUrl);
+        if ($videoId !== null) $videos[] = $videoId;
+    }
+
+    $videoCount = count($videos);
+    $carouselId = 'video-gallery-' . substr(sha1((string)($widget['id'] ?? 'gallery')), 0, 12);
 
     ob_start();
     ?>
-    <section class="gallery-section my-5 p-4 rounded bg-dark text-white" data-widget-id="<?= e($widget['id'] ?? 'gallery') ?>">
-        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-secondary pb-2">
-            <h4 class="fw-bold mb-0 text-white"><i class="bi bi-camera-fill text-warning me-2"></i><?= e($title) ?></h4>
-            <a href="#" class="text-warning text-decoration-none small">সব গ্যালারি <i class="bi bi-arrow-right"></i></a>
+    <section class="gallery-section video-gallery-section my-5 p-3 p-md-4 rounded bg-dark text-white" data-widget-id="<?= e($widget['id'] ?? 'gallery') ?>">
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-3 border-bottom border-secondary pb-2">
+            <h4 class="fw-bold mb-0 text-white"><i class="bi bi-camera-video-fill text-warning me-2"></i><?= e($title) ?></h4>
+            <?php if ($videoCount > 0): ?>
+                <span class="badge text-bg-warning flex-shrink-0"><?= bn_number($videoCount) ?> ভিডিও</span>
+            <?php endif; ?>
         </div>
-        <div class="row g-3">
-            <?php foreach ($galleryItems as $item): ?>
-                <div class="col-md-3 col-sm-6">
-                    <div class="position-relative rounded overflow-hidden shadow-sm" style="aspect-ratio: 16/10;">
-                        <img src="<?= e($item['image']) ?>" alt="<?= e($item['title']) ?>" class="w-100 h-100 object-fit-cover">
-                        <span class="position-absolute bottom-0 start-0 end-0 p-2 bg-dark bg-opacity-75 small text-white"><?= e($item['title']) ?></span>
-                    </div>
+
+        <?php if ($videoCount === 0): ?>
+            <div class="video-gallery-empty text-center text-white-50 py-5">
+                <i class="bi bi-youtube fs-1 d-block mb-2"></i>
+                <p class="mb-0">এখনও কোনো YouTube ভিডিও যোগ করা হয়নি।</p>
+            </div>
+        <?php else: ?>
+            <div
+                id="<?= e($carouselId) ?>"
+                class="carousel slide video-gallery-carousel"
+                data-video-gallery-carousel
+                data-bs-pause="hover"
+                data-bs-touch="true"
+                data-bs-wrap="true"
+                <?php if ($videoCount > 1): ?>data-bs-ride="carousel" data-bs-interval="7000"<?php endif; ?>
+                aria-roledescription="carousel"
+                aria-label="<?= e($title) ?>"
+            >
+                <div class="carousel-inner rounded overflow-hidden bg-black">
+                    <?php foreach ($videos as $videoIndex => $videoId): ?>
+                        <?php $embedUrl = 'https://www.youtube.com/embed/' . rawurlencode($videoId) . '?rel=0&enablejsapi=1'; ?>
+                        <div class="carousel-item<?= $videoIndex === 0 ? ' active' : '' ?>" aria-roledescription="slide" aria-label="<?= bn_number($videoIndex + 1) ?> / <?= bn_number($videoCount) ?>">
+                            <div class="ratio ratio-16x9">
+                                <iframe
+                                    src="<?= e($embedUrl) ?>"
+                                    title="<?= e($title) ?> - ভিডিও <?= bn_number($videoIndex + 1) ?>"
+                                    loading="lazy"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    referrerpolicy="strict-origin-when-cross-origin"
+                                    allowfullscreen
+                                ></iframe>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
-            <?php endforeach; ?>
-        </div>
+
+                <?php if ($videoCount > 1): ?>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#<?= e($carouselId) ?>" data-bs-slide="prev" aria-label="আগের ভিডিও">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#<?= e($carouselId) ?>" data-bs-slide="next" aria-label="পরের ভিডিও">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="video-gallery-counter text-center small text-white-50 mt-2" aria-live="polite">
+                        <span data-video-gallery-current>১</span> / <?= bn_number($videoCount) ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
     </section>
     <?php
     return ob_get_clean();
