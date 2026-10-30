@@ -26,6 +26,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         exit;
     }
 
+    // Video galleries accept an unlimited list of valid YouTube video URLs only.
+    foreach ($decoded as &$layoutWidget) {
+        if (!is_array($layoutWidget) || ($layoutWidget['type'] ?? '') !== 'multimedia_gallery') {
+            continue;
+        }
+
+        $gallerySettings = isset($layoutWidget['settings']) && is_array($layoutWidget['settings']) ? $layoutWidget['settings'] : [];
+        $videoLinks = $gallerySettings['youtube_videos'] ?? [];
+        if (!is_array($videoLinks)) {
+            echo json_encode(['success' => false, 'message' => 'YouTube video links must be provided as a list.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        foreach ($videoLinks as $videoLink) {
+            if (!is_string($videoLink) || (trim($videoLink) !== '' && youtube_video_id_from_url($videoLink) === null)) {
+                echo json_encode(['success' => false, 'message' => 'Only valid YouTube video links are allowed in the Video Gallery.'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+        }
+
+        $layoutWidget = normalize_video_gallery_widget($layoutWidget);
+    }
+    unset($layoutWidget);
+
     $stmt = $db->prepare("
         UPDATE `page_layouts` 
         SET `layout_data` = :layout, `updated_at` = CURRENT_TIMESTAMP 
@@ -196,10 +220,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [
                 'id' => 'sec_gallery',
                 'type' => 'multimedia_gallery',
-                'title' => 'Photo & Video Gallery',
+                'title' => 'ভিডিও গ্যালারি',
                 'container' => 'full',
                 'status' => 1,
-                'settings' => ['title' => 'ছবি ও ভিডিও গ্যালারি', 'limit' => 4]
+                'settings' => ['title' => 'ভিডিও গ্যালারি', 'youtube_videos' => []]
             ]
         ];
 
@@ -234,6 +258,13 @@ $categories = $db->query("SELECT id, name, slug FROM categories ORDER BY order_i
 $currentWidgets = json_decode($currentPage['layout_data'] ?? '[]', true);
 if (!is_array($currentWidgets)) {
     $currentWidgets = [];
+}
+
+// Upgrade existing multimedia widgets to the YouTube-only video gallery editor.
+foreach ($currentWidgets as $widgetIndex => $currentWidget) {
+    if (is_array($currentWidget) && ($currentWidget['type'] ?? '') === 'multimedia_gallery') {
+        $currentWidgets[$widgetIndex] = normalize_video_gallery_widget($currentWidget);
+    }
 }
 
 include __DIR__ . '/includes/header.php';
@@ -430,15 +461,15 @@ include __DIR__ . '/includes/header.php';
                             </div>
                         </div>
 
-                        <!-- 7. Multimedia Gallery -->
+                        <!-- 7. YouTube Video Gallery -->
                         <div class="col-12">
                             <div class="widget-palette-item p-2" onclick="addWidget('multimedia_gallery');">
                                 <div class="widget-palette-icon bg-dark bg-opacity-10 text-dark" style="width:30px; height:30px; font-size:1rem;">
-                                    <i class="bi bi-camera-fill"></i>
+                                    <i class="bi bi-camera-video-fill"></i>
                                 </div>
                                 <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">Photo & Video Gallery</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">Dark background grid for photo and video stories</div>
+                                    <div class="fw-bold small text-dark lh-sm">Video Gallery</div>
+                                    <div class="text-muted text-truncate" style="font-size: 10px;">Unlimited YouTube videos in an automatic carousel</div>
                                 </div>
                             </div>
                         </div>
@@ -673,12 +704,12 @@ const WIDGET_META = {
         defaultSettings: { left_category: 'country', left_title: 'সারাদেশ', right_category: 'sports', right_title: 'খেলাধুলা', limit: 4 }
     },
     multimedia_gallery: {
-        label: 'Photo & Video Gallery',
-        icon: 'bi-camera-fill',
+        label: 'Video Gallery',
+        icon: 'bi-camera-video-fill',
         colorClass: 'type-multimedia_gallery',
         defaultContainer: 'full',
-        defaultTitle: 'Photo & Video Gallery',
-        defaultSettings: { title: 'ছবি ও ভিডিও গ্যালারি', limit: 4 }
+        defaultTitle: 'ভিডিও গ্যালারি',
+        defaultSettings: { title: 'ভিডিও গ্যালারি', youtube_videos: [] }
     },
     custom_html: {
         label: 'Custom HTML / Embed',
@@ -798,8 +829,10 @@ function describeWidget(w) {
             return `Slot: ${s.position || 'after_lead'}`;
         case 'hero_lead':
             return `Lead + 3 Thumbs + 3 Sidebar`;
-        case 'multimedia_gallery':
-            return `Gallery (${s.limit || 4} items)`;
+        case 'multimedia_gallery': {
+            const videoCount = Array.isArray(s.youtube_videos) ? s.youtube_videos.filter(Boolean).length : 0;
+            return `${videoCount} YouTube video${videoCount === 1 ? '' : 's'}`;
+        }
         case 'custom_html':
             return `Custom HTML`;
         case 'sidebar_tabs':
@@ -869,6 +902,63 @@ function deleteWidget(idx) {
         updateLivePreview();
         showToast('Widget deleted.');
     }
+}
+
+/**
+ * Validate a YouTube URL and return its 11-character video ID.
+ */
+function getYoutubeVideoId(value) {
+    try {
+        const url = new URL(value.trim());
+        if (!['http:', 'https:'].includes(url.protocol)) return null;
+
+        const host = url.hostname.toLowerCase().replace(/\.$/, '');
+        let videoId = null;
+
+        if (['youtu.be', 'www.youtu.be'].includes(host)) {
+            const match = url.pathname.match(/^\/([A-Za-z0-9_-]{11})(?:\/.*)?$/);
+            if (match) videoId = match[1];
+        } else if (['youtube.com', 'www.youtube.com', 'm.youtube.com'].includes(host)) {
+            if (url.pathname.replace(/^\/+|\/+$/g, '') === 'watch') {
+                videoId = url.searchParams.get('v');
+            } else {
+                const match = url.pathname.match(/^\/(?:embed|shorts|live|v)\/([A-Za-z0-9_-]{11})(?:\/.*)?$/);
+                if (match) videoId = match[1];
+            }
+        }
+
+        return videoId && /^[A-Za-z0-9_-]{11}$/.test(videoId) ? videoId : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+/**
+ * Build one repeatable YouTube URL field. There is intentionally no item limit.
+ */
+function youtubeVideoFieldHtml(videoUrl = '') {
+    return `
+        <div class="input-group input-group-sm youtube-video-row mb-2">
+            <span class="input-group-text bg-white"><i class="bi bi-youtube text-danger"></i></span>
+            <input type="url" class="form-control youtube-video-url" value="${escapeHtml(videoUrl)}" placeholder="https://www.youtube.com/watch?v=..." aria-label="YouTube video URL">
+            <button type="button" class="btn btn-outline-danger" onclick="removeYoutubeVideoField(this);" title="Remove video" aria-label="Remove video">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+}
+
+function addYoutubeVideoField() {
+    const list = document.getElementById('youtubeVideoList');
+    if (!list) return;
+    list.insertAdjacentHTML('beforeend', youtubeVideoFieldHtml());
+    const inputs = list.querySelectorAll('.youtube-video-url');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function removeYoutubeVideoField(button) {
+    const row = button.closest('.youtube-video-row');
+    if (row) row.remove();
 }
 
 /**
@@ -1024,11 +1114,21 @@ function editWidget(idx) {
             </div>
         `;
     } else if (w.type === 'multimedia_gallery') {
+        const savedVideos = Array.isArray(s.youtube_videos) ? s.youtube_videos : [];
+        const editableVideos = savedVideos.length ? savedVideos : [''];
+        const videoFields = editableVideos.map(videoUrl => youtubeVideoFieldHtml(videoUrl)).join('');
+
         fieldsHtml += `
-            <div class="mb-3">
-                <label class="form-label fw-bold small">Gallery Items Count</label>
-                <input type="number" class="form-control form-control-sm" id="edit_limit" value="${s.limit || 4}" min="2" max="8" style="max-width: 150px;">
+            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                <label class="form-label fw-bold small mb-0">YouTube Video Links</label>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addYoutubeVideoField();">
+                    <i class="bi bi-plus-lg me-1"></i>Add Video
+                </button>
             </div>
+            <div id="youtubeVideoList" class="overflow-y-auto pe-1" style="max-height: 45vh;">${videoFields}</div>
+            <small class="text-muted d-block mb-3">
+                Only YouTube video links are allowed. Add unlimited links; each valid link becomes an embedded video in the carousel.
+            </small>
         `;
     }
 
@@ -1072,7 +1172,23 @@ function applyWidgetSettings() {
     } else if (w.type === 'sidebar_tabs') {
         w.settings.limit = parseInt(document.getElementById('edit_limit').value, 10) || 7;
     } else if (w.type === 'multimedia_gallery') {
-        w.settings.limit = parseInt(document.getElementById('edit_limit').value, 10) || 4;
+        const inputs = Array.from(document.querySelectorAll('#youtubeVideoList .youtube-video-url'));
+        const videoLinks = [];
+
+        for (const input of inputs) {
+            const videoUrl = input.value.trim();
+            if (!videoUrl) continue;
+            if (!getYoutubeVideoId(videoUrl)) {
+                alert('Please enter a valid YouTube video link. Non-YouTube links are not allowed.');
+                input.focus();
+                return;
+            }
+            videoLinks.push(videoUrl);
+        }
+
+        w.settings.youtube_videos = videoLinks;
+        w.settings.title = w.title;
+        delete w.settings.limit;
     }
 
     renderCanvas();

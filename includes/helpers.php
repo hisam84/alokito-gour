@@ -55,6 +55,78 @@ function bn_date($dateStr, bool $showTime = false): string {
 }
 
 /**
+ * Extract a video ID from a valid YouTube watch, share, Shorts, live, or embed URL.
+ */
+function youtube_video_id_from_url(string $url): ?string {
+    $url = trim($url);
+    if ($url === '') return null;
+
+    $parts = parse_url($url);
+    if (!is_array($parts) || empty($parts['scheme']) || empty($parts['host'])) return null;
+
+    $scheme = strtolower((string)$parts['scheme']);
+    if (!in_array($scheme, ['http', 'https'], true)) return null;
+
+    $host = strtolower(rtrim((string)$parts['host'], '.'));
+    $path = (string)($parts['path'] ?? '');
+    $videoId = null;
+
+    if (in_array($host, ['youtu.be', 'www.youtu.be'], true)) {
+        if (preg_match('~^/([A-Za-z0-9_-]{11})(?:/.*)?$~', $path, $matches)) {
+            $videoId = $matches[1];
+        }
+    } elseif (in_array($host, ['youtube.com', 'www.youtube.com', 'm.youtube.com'], true)) {
+        if (trim($path, '/') === 'watch') {
+            parse_str((string)($parts['query'] ?? ''), $query);
+            if (isset($query['v']) && is_string($query['v'])) {
+                $videoId = $query['v'];
+            }
+        } elseif (preg_match('~^/(?:embed|shorts|live|v)/([A-Za-z0-9_-]{11})(?:/.*)?$~', $path, $matches)) {
+            $videoId = $matches[1];
+        }
+    }
+
+    if (!is_string($videoId) || !preg_match('/^[A-Za-z0-9_-]{11}$/D', $videoId)) {
+        return null;
+    }
+
+    return $videoId;
+}
+
+/**
+ * Normalize legacy gallery widgets and discard unsafe/non-YouTube video URLs.
+ */
+function normalize_video_gallery_widget(array $widget): array {
+    $settings = isset($widget['settings']) && is_array($widget['settings']) ? $widget['settings'] : [];
+    $title = trim((string)($widget['title'] ?? ($settings['title'] ?? '')));
+    $legacyTitles = ['Photo & Video Gallery', 'ছবি ও ভিডিও গ্যালারি'];
+
+    if ($title === '' || in_array($title, $legacyTitles, true)) {
+        $title = 'ভিডিও গ্যালারি';
+    }
+
+    $links = $settings['youtube_videos'] ?? [];
+    if (!is_array($links)) $links = [];
+
+    $validLinks = [];
+    foreach ($links as $link) {
+        if (!is_string($link)) continue;
+        $link = trim($link);
+        if ($link !== '' && youtube_video_id_from_url($link) !== null) {
+            $validLinks[] = $link;
+        }
+    }
+
+    unset($settings['limit']);
+    $settings['title'] = $title;
+    $settings['youtube_videos'] = $validLinks;
+    $widget['title'] = $title;
+    $widget['settings'] = $settings;
+
+    return $widget;
+}
+
+/**
  * Relative time in Bengali (e.g., '১০ মিনিট আগে', '২ ঘন্টা আগে', '৩ দিন আগে').
  */
 function get_time_ago($dateStr): string {
