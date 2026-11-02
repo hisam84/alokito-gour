@@ -50,3 +50,9 @@
 - **Phase 3**: Public News Portal frontend clone completed (`header.php`, `navbar.php`, `ticker.php`, `sidebar.php`, `footer.php`, `index.php`, `single.php`, `category.php`, `search.php`, `style.css`, `main.js`).
 - **Phase 4**: Production `.htaccess` routing, Gzip compression, browser caching, and upload security implemented.
 - **Phase 5**: Codebase syntax validated across all PHP scripts.
+- **Phase 6**: Page Builder rebuilt with an Elementor-style workspace (`admin/page-builder.php`, `admin/assets/css/builder.css`, `admin/assets/js/page-builder.js`):
+  - Left panel: widget **icon** library (3-column tiles, grouped by category) + structure navigator with drag re-ordering.
+  - Center: true **real-time live preview** iframe (scaled to the device width, click-to-select, hover toolbar, drag handles).
+  - Right panel: **live content editor** (inspector) — every keystroke updates the model and refreshes the preview (380 ms debounce).
+  - Drag & drop from the icon library directly into the canvas (HTML5 DnD + `postMessage` bridge in `admin/live-preview.php`).
+  - Undo/redo, Ctrl + S save, unsaved-changes guard, CSRF-protected AJAX `save_layout` endpoint with widget whitelisting.

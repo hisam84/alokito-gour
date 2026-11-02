@@ -29,6 +29,12 @@ $pageTitle = $pageTitle ?? 'Admin Dashboard | Alokito Gour';
     
     <!-- Admin Custom CSS -->
     <link href="assets/css/admin.css" rel="stylesheet">
+
+    <?php if (!empty($extraCss)): ?>
+        <?php foreach ((array)$extraCss as $cssHref): ?>
+            <link href="<?= e($cssHref) ?>" rel="stylesheet">
+        <?php endforeach; ?>
+    <?php endif; ?>
     
     <?php if (!empty($settings['favicon_path'])): ?>
     <link rel="shortcut icon" href="<?= e($settings['favicon_path']) ?>">

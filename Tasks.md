@@ -82,3 +82,17 @@
 - [x] Verify right-side advertisement banner elasticity (100% fixed column width, flexible/unconstrained auto height, upload-ready with placeholder)
 - [x] Validate end-to-end user journeys (Home, Article details with view counter, Category filter, Search, Admin panel, Media gallery)
 - [x] Local server running and verified at `http://localhost:8000`
+
+---
+
+## Phase 6: Elementor-Style Page Builder (Left Icon Library • Right Live Editor)
+- [x] Rebuild `admin/page-builder.php` as a three-pane workspace (library • canvas • inspector)
+- [x] Widget **icon** tiles grouped by category with live search
+- [x] Structure navigator with drag-to-reorder, visibility, duplicate and delete
+- [x] Real-time preview iframe with device widths, zoom-to-fit and scroll preservation
+- [x] In-canvas click-to-select, hover toolbar and drag-to-reorder overlay (`admin/live-preview.php`)
+- [x] Drag & drop widgets from the library straight into the preview
+- [x] Right-side live content editor (inspector) with per-widget fields
+- [x] Undo/redo, keyboard shortcuts (`Ctrl+S`, `Ctrl+Z`, `Esc`, `Delete`) and unsaved-change guard
+- [x] CSRF-protected AJAX save endpoint with server-side widget whitelisting
+- [x] PHP syntax + DOM smoke tests (jsdom) for both builder and canvas overlay

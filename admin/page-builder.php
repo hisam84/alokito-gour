@@ -1,7 +1,7 @@
 <?php
 /**
- * Dynamic Drag-and-Drop Page Builder with Real-Time Live Preview
- * WordPress/Elementor-Style Real-time Sync & Modular Widget Engine
+ * Elementor-Style Page Builder with Real-Time Live Preview
+ * Left: widget icon library  •  Right: canvas + live content editor
  * Alokito Gour Clone
  */
 
@@ -12,39 +12,80 @@ require_once __DIR__ . '/includes/auth_guard.php';
 $db = get_db();
 $pageTitle = 'Page Builder | Alokito Gour';
 
-// Handle AJAX Save Request
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_layout') {
+/**
+ * ------------------------------------------------------------------
+ * AJAX: Save layout (called from the builder toolbar / Ctrl+S)
+ * ------------------------------------------------------------------
+ */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_layout') {
     header('Content-Type: application/json; charset=utf-8');
 
-    $slug = trim($_POST['page_slug'] ?? 'home');
-    $rawLayout = $_POST['layout_data'] ?? '[]';
-
-    // Verify valid JSON
-    $decoded = json_decode($rawLayout, true);
-    if (!is_array($decoded)) {
-        echo json_encode(['success' => false, 'message' => 'Invalid layout data']);
+    // CSRF verification for the AJAX endpoint
+    $token = (string)($_POST['csrf_token'] ?? '');
+    if (!hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+        http_response_code(419);
+        echo json_encode([
+            'success' => false,
+            'message' => 'নিরাপত্তা টোকেনের মেয়াদ শেষ হয়েছে। পেজ রিফ্রেশ করে আবার চেষ্টা করুন।',
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
+    $slug = trim((string)($_POST['page_slug'] ?? 'home'));
+    $rawLayout = (string)($_POST['layout_data'] ?? '[]');
+
+    $decoded = json_decode($rawLayout, true);
+    if (!is_array($decoded)) {
+        http_response_code(422);
+        echo json_encode(['success' => false, 'message' => 'লেআউট ডেটা সঠিক নয়।'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // Whitelist widget structure so only known keys are persisted
+    $allowedTypes = ['hero_lead', 'ad_banner', 'category_block', 'category_grid', 'category_split',
+        'full_width_split', 'multimedia_gallery', 'custom_html', 'sidebar_tabs', 'district_filter'];
+    $cleanLayout = [];
+    foreach ($decoded as $widget) {
+        if (!is_array($widget) || empty($widget['type'])) {
+            continue;
+        }
+        if (!in_array($widget['type'], $allowedTypes, true)) {
+            continue;
+        }
+        $cleanLayout[] = [
+            'id'        => (string)($widget['id'] ?? ('sec_' . $widget['type'] . '_' . bin2hex(random_bytes(3)))),
+            'type'      => (string)$widget['type'],
+            'title'     => (string)($widget['title'] ?? ''),
+            'container' => (isset($widget['container']) && $widget['container'] === 'full') ? 'full' : 'main',
+            'status'    => (isset($widget['status']) && (int)$widget['status'] === 0) ? 0 : 1,
+            'settings'  => is_array($widget['settings'] ?? null) ? $widget['settings'] : new stdClass(),
+        ];
+    }
+
     $stmt = $db->prepare("
-        UPDATE `page_layouts` 
-        SET `layout_data` = :layout, `updated_at` = CURRENT_TIMESTAMP 
+        UPDATE `page_layouts`
+        SET `layout_data` = :layout, `updated_at` = CURRENT_TIMESTAMP
         WHERE `page_slug` = :slug
     ");
     $stmt->execute([
-        ':layout' => json_encode($decoded, JSON_UNESCAPED_UNICODE),
-        ':slug' => $slug,
+        ':layout' => json_encode($cleanLayout, JSON_UNESCAPED_UNICODE),
+        ':slug'   => $slug,
     ]);
 
     echo json_encode([
-        'success' => true,
-        'message' => 'Layout saved successfully!',
-        'count' => count($decoded)
+        'success'   => true,
+        'message'   => 'লেআউট সফলভাবে সংরক্ষিত হয়েছে।',
+        'count'     => count($cleanLayout),
+        'saved_at'  => date('Y-m-d H:i:s'),
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-// Handle Form Submissions (Create Page, Reset Default, Delete Page)
+/**
+ * ------------------------------------------------------------------
+ * Classic form actions: create page / delete page / reset default
+ * ------------------------------------------------------------------
+ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf_token();
     $action = $_POST['form_action'] ?? '';
@@ -56,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($newTitle) || empty($newSlug)) {
             set_flash('danger', 'Page title and slug are required.');
         } else {
-            // Check uniqueness
             $checkStmt = $db->prepare("SELECT id FROM page_layouts WHERE page_slug = ?");
             $checkStmt->execute([$newSlug]);
             if ($checkStmt->fetch()) {
@@ -67,7 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($template === 'home_clone') {
                     $hStmt = $db->query("SELECT layout_data FROM page_layouts WHERE page_slug = 'home' LIMIT 1");
                     $hRow = $hStmt->fetch();
-                    if ($hRow) $initData = $hRow['layout_data'];
+                    if ($hRow) {
+                        $initData = $hRow['layout_data'];
+                    }
                 }
 
                 $insStmt = $db->prepare("INSERT INTO page_layouts (page_slug, title, layout_data, status) VALUES (?, ?, ?, 1)");
@@ -89,118 +131,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
     } elseif ($action === 'reset_default') {
-        // Authentic default 10-widget homepage layout
+        // Authentic default 11-widget homepage layout
         $defaultHomeLayout = [
-            [
-                'id' => 'sec_hero_lead',
-                'type' => 'hero_lead',
-                'title' => 'Top & Lead Stories (Hero Lead Section)',
-                'container' => 'main',
-                'status' => 1,
-                'settings' => ['bottom_thumbs' => 3, 'sub_leads' => 3]
-            ],
-            [
-                'id' => 'sec_ad_after_lead',
-                'type' => 'ad_banner',
-                'title' => 'Ad Banner (After Lead)',
-                'container' => 'main',
-                'status' => 1,
-                'settings' => ['position' => 'after_lead']
-            ],
-            [
-                'id' => 'sec_cat_chapai',
-                'type' => 'category_block',
-                'title' => 'Chapainawabganj',
-                'container' => 'main',
-                'status' => 1,
-                'settings' => ['category_slug' => 'chapai-nawabganj', 'limit' => 5, 'show_more' => true]
-            ],
-            [
-                'id' => 'sec_cat_national',
-                'type' => 'category_grid',
-                'title' => 'National',
-                'container' => 'main',
-                'status' => 1,
-                'settings' => ['category_slug' => 'national', 'limit' => 4, 'show_more' => true]
-            ],
-            [
-                'id' => 'sec_cat_politics_intl',
-                'type' => 'category_split',
-                'title' => 'Politics & International',
-                'container' => 'main',
-                'status' => 1,
-                'settings' => [
-                    'left_category' => 'politics',
-                    'left_title' => 'রাজনীতি',
-                    'right_category' => 'international',
-                    'right_title' => 'আন্তর্জাতিক',
-                    'limit' => 4
-                ]
-            ],
-            [
-                'id' => 'sec_cat_economy_law',
-                'type' => 'category_split',
-                'title' => 'Economy & Law-Rights',
-                'container' => 'main',
-                'status' => 1,
-                'settings' => [
-                    'left_category' => 'economy',
-                    'left_title' => 'অর্থনীতি',
-                    'right_category' => 'law-rights',
-                    'right_title' => 'আইন ও অধিকার',
-                    'limit' => 4
-                ]
-            ],
-            [
-                'id' => 'sec_cat_tech_religion',
-                'type' => 'category_split',
-                'title' => 'Tech & Religion',
-                'container' => 'main',
-                'status' => 1,
-                'settings' => [
-                    'left_category' => 'tech',
-                    'left_title' => 'বিজ্ঞান ও প্রযুক্তি',
-                    'right_category' => 'religion',
-                    'right_title' => 'ধর্ম ও জীবন',
-                    'limit' => 4
-                ]
-            ],
-            [
-                'id' => 'sec_cat_jobs_edu',
-                'type' => 'category_split',
-                'title' => 'Jobs & Education',
-                'container' => 'main',
-                'status' => 1,
-                'settings' => [
-                    'left_category' => 'jobs-career',
-                    'left_title' => 'চাকরি ও ক্যারিয়ার',
-                    'right_category' => 'education-literature',
-                    'right_title' => 'শিক্ষা ও সাহিত্য',
-                    'limit' => 4
-                ]
-            ],
-            [
-                'id' => 'sec_full_country_sports',
-                'type' => 'full_width_split',
-                'title' => 'Countrywide & Sports',
-                'container' => 'full',
-                'status' => 1,
-                'settings' => [
-                    'left_category' => 'country',
-                    'left_title' => 'সারাদেশ',
-                    'right_category' => 'sports',
-                    'right_title' => 'খেলাধুলা',
-                    'limit' => 4
-                ]
-            ],
-            [
-                'id' => 'sec_gallery',
-                'type' => 'multimedia_gallery',
-                'title' => 'Photo & Video Gallery',
-                'container' => 'full',
-                'status' => 1,
-                'settings' => ['title' => 'ছবি ও ভিডিও গ্যালারি', 'limit' => 4]
-            ]
+            ['id' => 'sec_hero_lead', 'type' => 'hero_lead', 'title' => 'প্রধান ও শীর্ষ সংবাদ', 'container' => 'main', 'status' => 1, 'settings' => ['bottom_thumbs' => 3, 'sub_leads' => 3]],
+            ['id' => 'sec_ad_after_lead', 'type' => 'ad_banner', 'title' => 'বিজ্ঞাপন ব্যানার (লিডের পর)', 'container' => 'main', 'status' => 1, 'settings' => ['position' => 'after_lead']],
+            ['id' => 'sec_district_filter', 'type' => 'district_filter', 'title' => 'আমার এলাকার খবর', 'container' => 'main', 'status' => 1, 'settings' => []],
+            ['id' => 'sec_cat_chapai', 'type' => 'category_block', 'title' => 'চাঁপাইনবাবগঞ্জ', 'container' => 'main', 'status' => 1, 'settings' => ['category_slug' => 'chapai-nawabganj', 'limit' => 5, 'show_more' => true]],
+            ['id' => 'sec_cat_national', 'type' => 'category_grid', 'title' => 'জাতীয়', 'container' => 'main', 'status' => 1, 'settings' => ['category_slug' => 'national', 'limit' => 4, 'show_more' => true]],
+            ['id' => 'sec_cat_politics_intl', 'type' => 'category_split', 'title' => 'রাজনীতি ও আন্তর্জাতিক', 'container' => 'main', 'status' => 1, 'settings' => ['left_category' => 'politics', 'left_title' => 'রাজনীতি', 'right_category' => 'international', 'right_title' => 'আন্তর্জাতিক', 'limit' => 4]],
+            ['id' => 'sec_cat_economy_law', 'type' => 'category_split', 'title' => 'অর্থনীতি ও আইন-অধিকার', 'container' => 'main', 'status' => 1, 'settings' => ['left_category' => 'economy', 'left_title' => 'অর্থনীতি', 'right_category' => 'law-rights', 'right_title' => 'আইন ও অধিকার', 'limit' => 4]],
+            ['id' => 'sec_cat_tech_religion', 'type' => 'category_split', 'title' => 'বিজ্ঞান ও প্রযুক্তি এবং ধর্ম', 'container' => 'main', 'status' => 1, 'settings' => ['left_category' => 'tech', 'left_title' => 'বিজ্ঞান ও প্রযুক্তি', 'right_category' => 'religion', 'right_title' => 'ধর্ম ও জীবন', 'limit' => 4]],
+            ['id' => 'sec_cat_jobs_edu', 'type' => 'category_split', 'title' => 'চাকরি ও ক্যারিয়ার এবং শিক্ষা-সাহিত্য', 'container' => 'main', 'status' => 1, 'settings' => ['left_category' => 'jobs-career', 'left_title' => 'চাকরি ও ক্যারিয়ার', 'right_category' => 'education-literature', 'right_title' => 'শিক্ষা ও সাহিত্য', 'limit' => 4]],
+            ['id' => 'sec_full_country_sports', 'type' => 'full_width_split', 'title' => 'সারাদেশ ও খেলাধুলা', 'container' => 'full', 'status' => 1, 'settings' => ['left_category' => 'country', 'left_title' => 'সারাদেশ', 'right_category' => 'sports', 'right_title' => 'খেলাধুলা', 'limit' => 4]],
+            ['id' => 'sec_gallery', 'type' => 'multimedia_gallery', 'title' => 'ছবি ও ভিডিও গ্যালারি', 'container' => 'full', 'status' => 1, 'settings' => ['title' => 'ছবি ও ভিডিও গ্যালারি', 'limit' => 4]],
         ];
 
         $upStmt = $db->prepare("UPDATE page_layouts SET layout_data = ? WHERE page_slug = 'home'");
@@ -211,23 +154,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fetch all available pages
+// Pages / current page
 $allPages = $db->query("SELECT id, page_slug, title, updated_at FROM page_layouts ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 
-// Current selected page
 $currentSlug = trim($_GET['page'] ?? 'home');
 $pageStmt = $db->prepare("SELECT * FROM page_layouts WHERE page_slug = :slug LIMIT 1");
 $pageStmt->execute([':slug' => $currentSlug]);
 $currentPage = $pageStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$currentPage) {
-    // Fallback to home
     $currentSlug = 'home';
     $pageStmt->execute([':slug' => 'home']);
     $currentPage = $pageStmt->fetch(PDO::FETCH_ASSOC);
 }
 
-// Fetch all categories for select dropdowns
+// Categories for the inspector dropdowns
 $categories = $db->query("SELECT id, name, slug FROM categories ORDER BY order_index ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 // Decode current widgets
@@ -236,325 +177,220 @@ if (!is_array($currentWidgets)) {
     $currentWidgets = [];
 }
 
+// Normalise widget entries so the JS layer always has the same shape
+$normalisedWidgets = [];
+foreach ($currentWidgets as $widget) {
+    if (!is_array($widget) || empty($widget['type'])) {
+        continue;
+    }
+    $normalisedWidgets[] = [
+        'id'        => (string)($widget['id'] ?? ('sec_' . $widget['type'] . '_' . substr(md5(json_encode($widget)), 0, 6))),
+        'type'      => (string)$widget['type'],
+        'title'     => (string)($widget['title'] ?? ''),
+        'container' => (($widget['container'] ?? '') === 'full') ? 'full' : (string)($widget['container'] ?? 'main'),
+        'status'    => (isset($widget['status']) && (int)$widget['status'] === 0) ? 0 : 1,
+        'settings'  => is_array($widget['settings'] ?? null) ? $widget['settings'] : [],
+    ];
+}
+
+$previewUrl = ($currentSlug === 'home')
+    ? '/'
+    : (($currentSlug === 'news_sidebar') ? '/news/1' : '/page/' . urlencode($currentSlug));
+
+$previewFrameUrl = 'live-preview.php?page=' . urlencode($currentSlug) . '&builder=1';
+
+$pageType = ($currentSlug === 'home') ? 'home' : (($currentSlug === 'news_sidebar') ? 'sidebar' : 'custom');
+
+$builderConfig = [
+    'pageSlug'   => $currentSlug,
+    'pageTitle'  => $currentPage['title'] ?? $currentSlug,
+    'pageType'   => $pageType,
+    'csrfToken'  => csrf_token(),
+    'widgets'    => $normalisedWidgets,
+    'categories' => $categories,
+    'previewUrl' => $previewFrameUrl,
+    'liveUrl'    => $previewUrl,
+    'saveUrl'    => 'page-builder.php',
+];
+
+$extraCss = ['assets/css/builder.css'];
+
 include __DIR__ . '/includes/header.php';
 ?>
 
-<div class="content-body p-3 p-md-4">
-    <?php $flash = get_flash(); if ($flash): ?>
-        <div class="alert alert-<?= e($flash['type']) ?> alert-dismissible fade show mb-3" role="alert">
-            <?= e($flash['message']) ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <?php endif; ?>
+<div class="content-body">
+    <div class="eb-app" id="ebApp">
 
-    <!-- Top Action Toolbar -->
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-body p-3">
-            <div class="row align-items-center g-3">
-                <!-- Page Selector -->
-                <div class="col-xl-4 col-lg-5 col-md-6">
+        <!-- ================= TOP TOOLBAR ================= -->
+        <header class="eb-topbar">
+            <div class="eb-topbar-left">
+                <span class="eb-brand">
+                    <i class="bi bi-layout-text-window-reverse"></i>
+                    <span>Page Builder</span>
+                </span>
+
+                <select class="eb-page-select" id="ebPageSelector" onchange="location.href='page-builder.php?page=' + encodeURIComponent(this.value);">
+                    <?php foreach ($allPages as $p): ?>
+                        <option value="<?= e($p['page_slug']) ?>" <?= $p['page_slug'] === $currentSlug ? 'selected' : '' ?>>
+                            <?= e($p['title']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+
+                <button type="button" class="eb-btn eb-btn-icon" data-bs-toggle="modal" data-bs-target="#createPageModal" title="নতুন পেজ তৈরি করুন">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
+            </div>
+
+            <div class="eb-topbar-center">
+                <div class="eb-segment" id="ebModeSwitch">
+                    <button type="button" data-mode="split" class="active" title="এডিটর ও লাইভ প্রিভিউ একসাথে">
+                        <i class="bi bi-layout-sidebar-inset"></i><span>এডিটর</span>
+                    </button>
+                    <button type="button" data-mode="focus" title="শুধু লাইভ প্রিভিউ (ফুল স্ক্রিন)">
+                        <i class="bi bi-eye"></i><span>প্রিভিউ</span>
+                    </button>
+                </div>
+
+                <div class="eb-segment" id="ebDeviceSwitch">
+                    <button type="button" data-device="desktop" class="active" title="ডেস্কটপ ভিউ"><i class="bi bi-display"></i></button>
+                    <button type="button" data-device="tablet" title="ট্যাবলেট ভিউ"><i class="bi bi-tablet"></i></button>
+                    <button type="button" data-device="mobile" title="মোবাইল ভিউ"><i class="bi bi-phone"></i></button>
+                </div>
+
+                <div class="eb-segment">
+                    <button type="button" id="ebUndo" title="আনডু (Ctrl + Z)" disabled><i class="bi bi-arrow-counterclockwise"></i></button>
+                    <button type="button" id="ebRedo" title="রিডু (Ctrl + Shift + Z)" disabled><i class="bi bi-arrow-clockwise"></i></button>
+                </div>
+            </div>
+
+            <div class="eb-topbar-right">
+                <span class="eb-save-state" id="ebSaveState"><span class="dot"></span><span class="txt">সব পরিবর্তন সংরক্ষিত</span></span>
+
+                <button type="button" class="eb-btn eb-btn-icon" id="ebToggleLibrary" title="উইজেট প্যানেল">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </button>
+
+                <a href="<?= e($previewUrl) ?>" target="_blank" class="eb-btn eb-btn-ghost" title="লাইভ ওয়েবসাইট দেখুন">
+                    <i class="bi bi-box-arrow-up-right"></i><span>লাইভ সাইট</span>
+                </a>
+
+                <?php if ($currentSlug === 'home'): ?>
+                    <form method="POST" class="d-inline-flex m-0" onsubmit="return confirm('আপনি কি হোমপেজের সব সেকশন আগের ডিফল্ট লেআউটে ফিরিয়ে নিতে চান?');">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="form_action" value="reset_default">
+                        <button type="submit" class="eb-btn eb-btn-icon" title="ডিফল্ট লেআউটে রিসেট করুন">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </form>
+                <?php elseif ($currentSlug !== 'news_sidebar'): ?>
+                    <form method="POST" class="d-inline-flex m-0" onsubmit="return confirm('আপনি কি এই পেজটি মুছে ফেলতে চান?');">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="form_action" value="delete_page">
+                        <input type="hidden" name="del_slug" value="<?= e($currentSlug) ?>">
+                        <button type="submit" class="eb-btn eb-btn-icon" title="পেজ ডিলিট করুন">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </form>
+                <?php endif; ?>
+
+                <button type="button" class="eb-btn eb-btn-save" id="ebSaveBtn" title="লেআউট সেভ করুন (Ctrl + S)">
+                    <i class="bi bi-check2-circle"></i><span>সেভ করুন</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- ================= WORKSPACE ================= -->
+        <div class="eb-body">
+
+            <!-- ---------- LEFT: widget icon library + structure ---------- -->
+            <aside class="eb-panel eb-panel-left" id="ebLeftPanel">
+                <div class="eb-panel-head">
+                    <h6 class="eb-panel-title"><i class="bi bi-puzzle-fill"></i>উইজেট লাইব্রেরি</h6>
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="eb-count" id="ebLibraryCount">10</span>
+                        <button type="button" class="eb-btn eb-btn-icon eb-panel-close" id="ebCloseLibrary" title="বন্ধ করুন">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="eb-tabs" id="ebTabs">
+                    <button type="button" class="eb-tab active" data-tab="widgets">
+                        <i class="bi bi-grid-3x3-gap-fill"></i>উইজেট
+                    </button>
+                    <button type="button" class="eb-tab" data-tab="navigator">
+                        <i class="bi bi-list-nested"></i>স্ট্রাকচার
+                        <span class="eb-count" id="ebNavCount">0</span>
+                    </button>
+                </div>
+
+                <div class="eb-panel-scroll">
+                    <div class="eb-tab-panel" data-panel="widgets">
+                        <div class="eb-search">
+                            <i class="bi bi-search"></i>
+                            <input type="text" id="ebWidgetSearch" placeholder="উইজেট খুঁজুন…" autocomplete="off">
+                        </div>
+                        <div id="ebLibrary"><!-- widget tiles injected by JS --></div>
+                    </div>
+
+                    <div class="eb-tab-panel" data-panel="navigator" hidden>
+                        <ul class="eb-nav-list" id="ebNavList"><!-- injected by JS --></ul>
+                        <div class="eb-library-empty" id="ebNavEmpty" hidden>
+                            <i class="bi bi-inboxes d-block fs-4 mb-1 opacity-50"></i>
+                            এখনো কোনো উইজেট নেই। বাম দিকের আইকন থেকে যোগ করুন।
+                        </div>
+                    </div>
+                </div>
+
+                <div class="eb-panel-hint">
+                    <i class="bi bi-hand-index-thumb-fill"></i>
+                    আইকনে ক্লিক করুন বা ডান দিকের প্রিভিউতে টেনে ড্রপ করুন
+                </div>
+            </aside>
+
+            <!-- ---------- CENTER: live preview canvas ---------- -->
+            <section class="eb-canvas">
+                <div class="eb-canvas-bar">
                     <div class="d-flex align-items-center gap-2">
-                        <label class="form-label mb-0 fw-bold small text-nowrap"><i class="bi bi-file-earmark-code me-1 text-warning"></i>Page:</label>
-                        <select class="form-select form-select-sm" id="pageSelector" onchange="location.href='page-builder.php?page=' + this.value;">
-                            <?php foreach ($allPages as $p): ?>
-                                <option value="<?= e($p['page_slug']) ?>" <?= $p['page_slug'] === $currentSlug ? 'selected' : '' ?>>
-                                    <?= e($p['title']) ?> (<?= e($p['page_slug']) ?>)
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <button type="button" class="btn btn-outline-primary btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#createPageModal" title="Create New Page">
-                            <i class="bi bi-plus-lg"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- View Mode Switcher & Device Controls -->
-                <div class="col-xl-4 col-lg-7 col-md-6 text-center">
-                    <div class="d-inline-flex align-items-center gap-1 bg-light p-1 rounded border">
-                        <button type="button" class="btn btn-sm btn-white border shadow-sm active" id="btnModeSplit" onclick="setBuilderMode('split')" title="Split Mode: Canvas and Live Preview together">
-                            <i class="bi bi-layout-split me-1 text-primary"></i>Split View
-                        </button>
-                        <button type="button" class="btn btn-sm btn-light border-0" id="btnModeCanvas" onclick="setBuilderMode('canvas')" title="Canvas Drag-and-Drop Only">
-                            <i class="bi bi-card-checklist me-1 text-secondary"></i>Canvas
-                        </button>
-                        <button type="button" class="btn btn-sm btn-light border-0" id="btnModePreview" onclick="setBuilderMode('preview')" title="Fullscreen Live Preview">
-                            <i class="bi bi-eye me-1 text-success"></i>Full Preview
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Actions: Reset, Live Link, Save -->
-                <div class="col-xl-4 col-lg-12 text-xl-end text-center">
-                    <div class="d-flex align-items-center justify-content-xl-end justify-content-center gap-2 flex-wrap">
-                        <?php 
-                        $previewUrl = ($currentSlug === 'home') ? '/' : (($currentSlug === 'news_sidebar') ? '/news/1' : '/page/' . urlencode($currentSlug));
-                        ?>
-                        <a href="<?= e($previewUrl) ?>" target="_blank" class="btn btn-outline-secondary btn-sm" title="View live website in new tab">
-                            <i class="bi bi-box-arrow-up-right me-1"></i>Live Site
-                        </a>
-
-                        <?php if ($currentSlug === 'home'): ?>
-                            <form method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to reset all homepage sections to original default layout?');">
-                                <?= csrf_field() ?>
-                                <input type="hidden" name="form_action" value="reset_default">
-                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Reset to Default Layout">
-                                    <i class="bi bi-arrow-counterclockwise"></i>
-                                </button>
-                            </form>
-                        <?php elseif ($currentSlug !== 'news_sidebar'): ?>
-                            <form method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this page?');">
-                                <?= csrf_field() ?>
-                                <input type="hidden" name="form_action" value="delete_page">
-                                <input type="hidden" name="del_slug" value="<?= e($currentSlug) ?>">
-                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Page">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        <?php endif; ?>
-
-                        <!-- Save Layout Button -->
-                        <button type="button" class="btn btn-success btn-sm px-3 fw-bold" id="btnSaveLayout" onclick="saveLayout();">
-                            <i class="bi bi-check2-circle me-1"></i>Save Layout
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Page Builder Workspace Grid -->
-    <div class="row g-3" id="workspaceRow">
-        <!-- Column 1: Builder Canvas & Widget Library -->
-        <div class="col-xl-5 col-lg-6" id="builderCol">
-            <!-- Canvas Card -->
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0 fw-bold text-dark small"><i class="bi bi-ui-checks me-1 text-primary"></i>Canvas Widgets (Drag & Drop)</h6>
-                    </div>
-                    <span class="badge bg-secondary-subtle text-secondary" id="widgetCountBadge"><?= count($currentWidgets) ?></span>
-                </div>
-
-                <div class="card-body p-2 p-md-3">
-                    <!-- Drop Canvas -->
-                    <div class="builder-canvas" id="widgetCanvas" style="min-height: 280px;">
-                        <!-- Rendered dynamically by JavaScript -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Widget Drawer Palette -->
-            <div class="card border-0 shadow-sm" id="widgetDrawerCard">
-                <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 fw-bold text-dark small"><i class="bi bi-puzzle-fill me-1 text-warning"></i>+ Add Widget (Library)</h6>
-                    <small class="text-muted" style="font-size: 11px;">Click to append to canvas</small>
-                </div>
-
-                <div class="card-body p-2 p-md-3" style="max-height: 400px; overflow-y: auto;">
-                    <div class="row g-2">
-                        <!-- 1. Hero Lead -->
-                        <div class="col-12">
-                            <div class="widget-palette-item p-2" onclick="addWidget('hero_lead');">
-                                <div class="widget-palette-icon bg-danger bg-opacity-10 text-danger" style="width:30px; height:30px; font-size:1rem;">
-                                    <i class="bi bi-newspaper"></i>
-                                </div>
-                                <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">Hero Lead Stories</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">1 main lead story, 3 bottom thumbnails, and 3 sub-leads</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 2. Ad Banner -->
-                        <div class="col-12">
-                            <div class="widget-palette-item p-2" onclick="addWidget('ad_banner');">
-                                <div class="widget-palette-icon bg-warning bg-opacity-10 text-warning" style="width:30px; height:30px; font-size:1rem;">
-                                    <i class="bi bi-badge-ad"></i>
-                                </div>
-                                <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">Advertisement Banner</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">After-lead or sidebar advertisement banner slot</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 3. Category Block -->
-                        <div class="col-12">
-                            <div class="widget-palette-item p-2" onclick="addWidget('category_block');">
-                                <div class="widget-palette-icon bg-primary bg-opacity-10 text-primary" style="width:30px; height:30px; font-size:1rem;">
-                                    <i class="bi bi-card-heading"></i>
-                                </div>
-                                <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">Category Block (1 Big + List)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">Featured thumbnail on left and bullet news list on right</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 4. Category Grid -->
-                        <div class="col-12">
-                            <div class="widget-palette-item p-2" onclick="addWidget('category_grid');">
-                                <div class="widget-palette-icon bg-info bg-opacity-10 text-info" style="width:30px; height:30px; font-size:1rem;">
-                                    <i class="bi bi-grid-fill"></i>
-                                </div>
-                                <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">Category Grid (4 Thumb Cards)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">2x2 responsive photo grid of news cards</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 5. Split Category -->
-                        <div class="col-12">
-                            <div class="widget-palette-item p-2" onclick="addWidget('category_split');">
-                                <div class="widget-palette-icon bg-purple bg-opacity-10 text-purple" style="color: #8b5cf6; width:30px; height:30px; font-size:1rem;">
-                                    <i class="bi bi-layout-split"></i>
-                                </div>
-                                <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">Dual Category (Side-by-side)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">Side-by-side 2 different news categories</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 6. Full-Width Split -->
-                        <div class="col-12">
-                            <div class="widget-palette-item p-2" onclick="addWidget('full_width_split');">
-                                <div class="widget-palette-icon bg-success bg-opacity-10 text-success" style="width:30px; height:30px; font-size:1rem;">
-                                    <i class="bi bi-distribute-horizontal"></i>
-                                </div>
-                                <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">Full-Width Double Block</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">Full 12-column row with two side-by-side categories</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 7. Multimedia Gallery -->
-                        <div class="col-12">
-                            <div class="widget-palette-item p-2" onclick="addWidget('multimedia_gallery');">
-                                <div class="widget-palette-icon bg-dark bg-opacity-10 text-dark" style="width:30px; height:30px; font-size:1rem;">
-                                    <i class="bi bi-camera-fill"></i>
-                                </div>
-                                <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">Photo & Video Gallery</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">Dark background grid for photo and video stories</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 8. Custom HTML -->
-                        <div class="col-12">
-                            <div class="widget-palette-item p-2" onclick="addWidget('custom_html');">
-                                <div class="widget-palette-icon bg-secondary bg-opacity-10 text-secondary" style="width:30px; height:30px; font-size:1rem;">
-                                    <i class="bi bi-code-slash"></i>
-                                </div>
-                                <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">Custom HTML / Notice (Embed)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">Embed YouTube video, iframe, or custom HTML/CSS</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 9. Sidebar Tabs -->
-                        <div class="col-12">
-                            <div class="widget-palette-item p-2" onclick="addWidget('sidebar_tabs');">
-                                <div class="widget-palette-icon bg-info bg-opacity-10 text-info" style="width:30px; height:30px; font-size:1rem;">
-                                    <i class="bi bi-clock-history"></i>
-                                </div>
-                                <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">Latest & Popular News Tabs</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">Tabbed news widget for latest and most-read stories</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 10. District Filter -->
-                        <div class="col-12">
-                            <div class="widget-palette-item p-2" onclick="addWidget('district_filter');">
-                                <div class="widget-palette-icon bg-danger bg-opacity-10 text-danger" style="width:30px; height:30px; font-size:1rem;">
-                                    <i class="bi bi-geo-alt-fill"></i>
-                                </div>
-                                <div class="overflow-hidden">
-                                    <div class="fw-bold small text-dark lh-sm">Local News (District Filter)</div>
-                                    <div class="text-muted text-truncate" style="font-size: 10px;">Interactive district button grid filter</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Column 2: WordPress-Style Live Real-Time Preview Pane -->
-        <div class="col-xl-7 col-lg-6" id="previewCol">
-            <div class="card border-0 shadow-sm sticky-top" style="top: 80px;">
-                <!-- Preview Device & Control Header -->
-                <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fw-bold text-dark small"><i class="bi bi-display me-1 text-success"></i>Real-Time Live Preview</span>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1" id="liveSyncStatus" style="font-size: 11px;">
-                            <span class="spinner-grow spinner-grow-sm text-success" style="width: 7px; height: 7px;"></span>Sync Active
+                        <span class="eb-chip" id="ebSyncChip">
+                            <span class="sync-dot"></span><span class="txt">লাইভ প্রিভিউ</span>
+                        </span>
+                        <span class="eb-chip">
+                            <i class="bi bi-layers-half"></i><span id="ebWidgetCount">0</span> উইজেট
                         </span>
                     </div>
 
-                    <!-- Device Switcher Buttons -->
-                    <div class="d-flex align-items-center gap-1">
-                        <div class="btn-group btn-group-sm" role="group">
-                            <button type="button" class="btn btn-light border active" id="btnDevDesktop" onclick="setPreviewSize('desktop')" title="Desktop View (100%)">
-                                <i class="bi bi-display"></i>
-                            </button>
-                            <button type="button" class="btn btn-light border" id="btnDevTablet" onclick="setPreviewSize('tablet')" title="Tablet View (768px)">
-                                <i class="bi bi-tablet"></i>
-                            </button>
-                            <button type="button" class="btn btn-light border" id="btnDevMobile" onclick="setPreviewSize('mobile')" title="Mobile View (375px)">
-                                <i class="bi bi-phone"></i>
-                            </button>
-                        </div>
-
-                        <button type="button" class="btn btn-light border btn-sm" onclick="refreshLivePreview()" title="Refresh Preview">
-                            <i class="bi bi-arrow-clockwise"></i>
+                    <div class="eb-canvas-actions">
+                        <button type="button" class="eb-btn" id="ebOpenLibrary" title="উইজেট লাইব্রেরি খুলুন">
+                            <i class="bi bi-grid-3x3-gap"></i><span>উইজেট</span>
+                        </button>
+                        <button type="button" class="eb-btn" id="ebRefreshPreview" title="প্রিভিউ রিফ্রেশ করুন">
+                            <i class="bi bi-arrow-clockwise"></i><span>রিফ্রেশ</span>
+                        </button>
+                        <button type="button" class="eb-btn" id="ebToggleFocus" title="ফুল স্ক্রিন প্রিভিউ">
+                            <i class="bi bi-arrows-fullscreen"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Preview Frame Viewport -->
-                <div class="card-body p-2 preview-container" id="previewContainer">
-                    <iframe id="livePreviewFrame" class="device-desktop" src="live-preview.php?page=<?= urlencode($currentSlug) ?>" title="Live Real-time Preview"></iframe>
+                <div class="eb-frame-wrap">
+                    <div class="eb-frame-shell device-desktop" id="ebFrameShell">
+                        <iframe id="ebPreviewFrame" src="<?= e($previewFrameUrl) ?>" title="রিয়েল-টাইম লাইভ প্রিভিউ"></iframe>
+                        <div class="eb-frame-loading"><span><i class="bi bi-arrow-repeat"></i>প্রিভিউ আপডেট হচ্ছে…</span></div>
+                    </div>
                 </div>
-            </div>
+            </section>
+
+            <!-- ---------- RIGHT: live content editor (inspector) ---------- -->
+            <aside class="eb-panel eb-panel-right" id="ebInspector">
+                <div id="ebInspectorContent" class="d-flex flex-column h-100"><!-- injected by JS --></div>
+            </aside>
         </div>
     </div>
 </div>
 
-<!-- ========================================================
-     MODALS
-     ======================================================== -->
-
-<!-- 1. Widget Settings Configurator Modal -->
-<div class="modal fade" id="widgetSettingsModal" tabindex="-1" aria-labelledby="widgetSettingsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-light">
-                <h6 class="modal-title fw-bold" id="widgetSettingsModalLabel">
-                    <i class="bi bi-sliders me-1 text-warning"></i>Widget Configuration
-                </h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4" id="modalFormContainer">
-                <!-- Form dynamically rendered by JS based on widget type -->
-            </div>
-            <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary btn-sm px-3" onclick="applyWidgetSettings();">
-                    <i class="bi bi-check2 me-1"></i>Apply Settings
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 2. Create Page Modal -->
+<!-- ================= CREATE PAGE MODAL ================= -->
 <div class="modal fade" id="createPageModal" tabindex="-1" aria-labelledby="createPageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -563,736 +399,58 @@ include __DIR__ . '/includes/header.php';
                 <input type="hidden" name="form_action" value="create_page">
                 <div class="modal-header bg-light">
                     <h6 class="modal-title fw-bold" id="createPageModalLabel">
-                        <i class="bi bi-file-earmark-plus me-1 text-primary"></i>Create New Page
+                        <i class="bi bi-file-earmark-plus me-1 text-primary"></i>নতুন পেজ তৈরি করুন
                     </h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">Page Title <span class="text-danger">*</span></label>
-                        <input type="text" name="title" class="form-control" placeholder="e.g. Special News Coverage" required id="newPageTitle" onkeyup="autoSlug(this.value);">
+                        <label class="form-label fw-bold small">পেজের নাম <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control" placeholder="যেমন: বিশেষ সংবাদ" required id="newPageTitle" onkeyup="autoSlug(this.value);">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">Page URL Slug <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold small">URL স্লাগ <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text small">/page/</span>
                             <input type="text" name="slug" class="form-control" placeholder="special-coverage" required id="newPageSlug">
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small">Initial Layout Template</label>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold small">শুরুর লেআউট</label>
                         <select name="template" class="form-select">
-                            <option value="blank">Blank Canvas</option>
-                            <option value="home_clone">Clone Homepage Layout</option>
+                            <option value="blank">খালি ক্যানভাস</option>
+                            <option value="home_clone">হোমপেজের লেআউট কপি করুন</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm px-3">Create Page</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">বাতিল</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-3">পেজ তৈরি করুন</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Toast Container for Save Notifications -->
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11000">
-    <div id="saveToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body fs-6" id="saveToastMessage">
-                <i class="bi bi-check-circle-fill me-2"></i>Layout saved successfully!
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    </div>
+<!-- ================= TOAST ================= -->
+<div class="eb-toast" id="ebToast" role="status" aria-live="polite">
+    <i class="bi bi-check-circle-fill"></i><span id="ebToastText">সংরক্ষিত হয়েছে</span>
 </div>
 
-<!-- SortableJS CDN -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-
 <script>
-// Category data from PHP
-const ALL_CATEGORIES = <?= json_encode($categories, JSON_UNESCAPED_UNICODE) ?>;
-const PAGE_SLUG = <?= json_encode($currentSlug) ?>;
+    window.ALOKITO_BUILDER = <?= json_encode($builderConfig, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
-// In-Memory widget structure
-let currentWidgets = <?= json_encode($currentWidgets, JSON_UNESCAPED_UNICODE) ?>;
-let activeEditingIndex = -1;
-let currentMode = 'split'; // 'split', 'canvas', 'preview'
-let currentDevice = 'desktop'; // 'desktop', 'tablet', 'mobile'
-
-// Widget Meta Registry
-const WIDGET_META = {
-    hero_lead: {
-        label: 'Hero Lead Stories',
-        icon: 'bi-newspaper',
-        colorClass: 'type-hero_lead',
-        defaultContainer: 'main',
-        defaultTitle: 'Top & Lead Stories (Hero Lead Section)',
-        defaultSettings: { bottom_thumbs: 3, sub_leads: 3 }
-    },
-    ad_banner: {
-        label: 'Advertisement Banner',
-        icon: 'bi-badge-ad',
-        colorClass: 'type-ad_banner',
-        defaultContainer: 'main',
-        defaultTitle: 'Ad Banner (After Lead)',
-        defaultSettings: { position: 'after_lead', custom_code: '' }
-    },
-    category_block: {
-        label: 'Category Block (1 Big + List)',
-        icon: 'bi-card-heading',
-        colorClass: 'type-category_block',
-        defaultContainer: 'main',
-        defaultTitle: 'Chapainawabganj',
-        defaultSettings: { category_slug: 'chapai-nawabganj', limit: 5, show_more: true }
-    },
-    category_grid: {
-        label: 'Category Grid (4 Thumb Cards)',
-        icon: 'bi-grid-fill',
-        colorClass: 'type-category_grid',
-        defaultContainer: 'main',
-        defaultTitle: 'National',
-        defaultSettings: { category_slug: 'national', limit: 4, show_more: true }
-    },
-    category_split: {
-        label: 'Dual Category (Side-by-side)',
-        icon: 'bi-layout-split',
-        colorClass: 'type-category_split',
-        defaultContainer: 'main',
-        defaultTitle: 'Politics & International',
-        defaultSettings: { left_category: 'politics', left_title: 'রাজনীতি', right_category: 'international', right_title: 'আন্তর্জাতিক', limit: 4 }
-    },
-    full_width_split: {
-        label: 'Full-Width Double Block',
-        icon: 'bi-distribute-horizontal',
-        colorClass: 'type-full_width_split',
-        defaultContainer: 'full',
-        defaultTitle: 'Countrywide & Sports',
-        defaultSettings: { left_category: 'country', left_title: 'সারাদেশ', right_category: 'sports', right_title: 'খেলাধুলা', limit: 4 }
-    },
-    multimedia_gallery: {
-        label: 'Photo & Video Gallery',
-        icon: 'bi-camera-fill',
-        colorClass: 'type-multimedia_gallery',
-        defaultContainer: 'full',
-        defaultTitle: 'Photo & Video Gallery',
-        defaultSettings: { title: 'ছবি ও ভিডিও গ্যালারি', limit: 4 }
-    },
-    custom_html: {
-        label: 'Custom HTML / Embed',
-        icon: 'bi-code-slash',
-        colorClass: 'type-custom_html',
-        defaultContainer: 'main',
-        defaultTitle: 'Custom Notice / Embed Code',
-        defaultSettings: { content: '<div class="p-3 bg-light border rounded">Custom notice or embed code here...</div>' }
-    },
-    sidebar_tabs: {
-        label: 'Latest & Popular News Tabs',
-        icon: 'bi-clock-history',
-        colorClass: 'type-sidebar_tabs',
-        defaultContainer: 'main',
-        defaultTitle: 'Latest & Popular Stories',
-        defaultSettings: { limit: 7 }
-    },
-    district_filter: {
-        label: 'Local News (District Filter)',
-        icon: 'bi-geo-alt-fill',
-        colorClass: 'type-district_filter',
-        defaultContainer: 'main',
-        defaultTitle: 'Regional News (District Filter)',
-        defaultSettings: {}
+    // Slug helper for the "create page" modal
+    function autoSlug(val) {
+        const slug = String(val).toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .trim()
+            .replace(/[\s_-]+/g, '-');
+        const target = document.getElementById('newPageSlug');
+        if (target) target.value = slug;
     }
-};
-
-/**
- * Render the entire canvas from currentWidgets array
- */
-function renderCanvas() {
-    const canvas = document.getElementById('widgetCanvas');
-    const badge = document.getElementById('widgetCountBadge');
-    badge.innerText = `${currentWidgets.length}`;
-
-    if (currentWidgets.length === 0) {
-        canvas.innerHTML = `
-            <div class="text-center py-4 text-muted">
-                <i class="bi bi-layers fs-2 opacity-50 d-block mb-1"></i>
-                <h6 class="small mb-1">No widgets on canvas</h6>
-                <p class="text-muted" style="font-size: 11px;">Click any widget from the library below to add it.</p>
-            </div>
-        `;
-        return;
-    }
-
-    let html = '';
-    currentWidgets.forEach((w, idx) => {
-        const meta = WIDGET_META[w.type] || {
-            label: w.type,
-            icon: 'bi-puzzle',
-            colorClass: 'border-secondary',
-            defaultContainer: 'main'
-        };
-
-        const isHidden = (w.status === 0 || w.status === '0');
-        const container = w.container || meta.defaultContainer || 'main';
-        const containerLabel = (container === 'full') ? 'Full Width' : 'Main Column';
-        const containerBadgeClass = (container === 'full') ? 'bg-success-subtle text-success' : 'bg-primary-subtle text-primary';
-
-        html += `
-            <div class="widget-card ${meta.colorClass} ${isHidden ? 'is-hidden' : ''} p-2 mb-2" data-index="${idx}">
-                <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
-                    <span class="widget-handle py-1 px-1" title="Drag to reorder"><i class="bi bi-grip-vertical"></i></span>
-                    <span class="badge ${containerBadgeClass} p-1" style="font-size: 10px;">${containerLabel}</span>
-                    <div class="text-truncate">
-                        <div class="fw-bold text-dark small text-truncate" style="font-size: 12px;">
-                            <i class="bi ${meta.icon} me-1 text-muted"></i>${escapeHtml(w.title || meta.label)}
-                        </div>
-                        <div class="text-muted text-truncate" style="font-size: 10px;">
-                            ${escapeHtml(meta.label)} &bull; ${escapeHtml(describeWidget(w))}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="d-flex align-items-center gap-1 ms-1 flex-shrink-0">
-                    <!-- Visibility Toggle -->
-                    <button type="button" class="btn btn-sm ${isHidden ? 'btn-outline-secondary' : 'btn-outline-success'} p-0 px-1" style="font-size: 11px;" title="${isHidden ? 'Show' : 'Hide'}" onclick="toggleVisibility(${idx});">
-                        <i class="bi ${isHidden ? 'bi-eye-slash' : 'bi-eye'}"></i>
-                    </button>
-
-                    <!-- Edit Settings -->
-                    <button type="button" class="btn btn-sm btn-outline-primary p-0 px-1" style="font-size: 11px;" title="Configure Widget" onclick="editWidget(${idx});">
-                        <i class="bi bi-gear-fill"></i>
-                    </button>
-
-                    <!-- Duplicate -->
-                    <button type="button" class="btn btn-sm btn-outline-secondary p-0 px-1" style="font-size: 11px;" title="Duplicate" onclick="duplicateWidget(${idx});">
-                        <i class="bi bi-copy"></i>
-                    </button>
-
-                    <!-- Delete -->
-                    <button type="button" class="btn btn-sm btn-outline-danger p-0 px-1" style="font-size: 11px;" title="Delete" onclick="deleteWidget(${idx});">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-    });
-
-    canvas.innerHTML = html;
-}
-
-/**
- * Generate human-friendly description for widget card
- */
-function describeWidget(w) {
-    const s = w.settings || {};
-    switch (w.type) {
-        case 'category_block':
-        case 'category_grid':
-            return `Category: ${s.category_slug || 'national'} (${s.limit || 4} posts)`;
-        case 'category_split':
-        case 'full_width_split':
-            return `${s.left_title || s.left_category} &bull; ${s.right_title || s.right_category}`;
-        case 'ad_banner':
-            return `Slot: ${s.position || 'after_lead'}`;
-        case 'hero_lead':
-            return `Lead + 3 Thumbs + 3 Sidebar`;
-        case 'multimedia_gallery':
-            return `Gallery (${s.limit || 4} items)`;
-        case 'custom_html':
-            return `Custom HTML`;
-        case 'sidebar_tabs':
-            return `Latest & Popular (${s.limit || 7} posts)`;
-        case 'district_filter':
-            return `District Filter Grid`;
-        default:
-            return '';
-    }
-}
-
-/**
- * Add a new widget from palette
- */
-function addWidget(type) {
-    const meta = WIDGET_META[type];
-    if (!meta) return;
-
-    const newWidget = {
-        id: `sec_${type}_${Date.now()}`,
-        type: type,
-        title: meta.defaultTitle,
-        container: meta.defaultContainer,
-        status: 1,
-        settings: JSON.parse(JSON.stringify(meta.defaultSettings))
-    };
-
-    currentWidgets.push(newWidget);
-    renderCanvas();
-    updateLivePreview();
-    showToast(`'${meta.label}' widget added.`);
-}
-
-/**
- * Toggle visibility of a widget
- */
-function toggleVisibility(idx) {
-    if (!currentWidgets[idx]) return;
-    const currentStatus = currentWidgets[idx].status;
-    currentWidgets[idx].status = (currentStatus === 0 || currentStatus === '0') ? 1 : 0;
-    renderCanvas();
-    updateLivePreview();
-}
-
-/**
- * Duplicate a widget
- */
-function duplicateWidget(idx) {
-    if (!currentWidgets[idx]) return;
-    const clone = JSON.parse(JSON.stringify(currentWidgets[idx]));
-    clone.id = `sec_${clone.type}_${Date.now()}`;
-    clone.title = `${clone.title} (Copy)`;
-    currentWidgets.splice(idx + 1, 0, clone);
-    renderCanvas();
-    updateLivePreview();
-    showToast('Widget duplicated.');
-}
-
-/**
- * Delete a widget
- */
-function deleteWidget(idx) {
-    if (!currentWidgets[idx]) return;
-    if (confirm(`Are you sure you want to delete '${currentWidgets[idx].title}' widget?`)) {
-        currentWidgets.splice(idx, 1);
-        renderCanvas();
-        updateLivePreview();
-        showToast('Widget deleted.');
-    }
-}
-
-/**
- * Open Settings Modal for a widget
- */
-function editWidget(idx) {
-    activeEditingIndex = idx;
-    const w = currentWidgets[idx];
-    if (!w) return;
-
-    const modalTitle = document.getElementById('widgetSettingsModalLabel');
-    const container = document.getElementById('modalFormContainer');
-    modalTitle.innerHTML = `<i class="bi bi-sliders me-1 text-warning"></i>Configuration: ${escapeHtml(w.title)}`;
-
-    const s = w.settings || {};
-    let fieldsHtml = '';
-
-    // Common 1: Title
-    fieldsHtml += `
-        <div class="row g-3 mb-3">
-            <div class="col-md-8">
-                <label class="form-label fw-bold small">Widget Title</label>
-                <input type="text" class="form-control form-control-sm" id="edit_title" value="${escapeHtml(w.title || '')}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label fw-bold small">Layout Position</label>
-                <select class="form-select form-select-sm" id="edit_container">
-                    <option value="main" ${w.container === 'main' ? 'selected' : ''}>Main Column (8 Columns)</option>
-                    <option value="full" ${w.container === 'full' ? 'selected' : ''}>Full Width (12 Columns)</option>
-                </select>
-            </div>
-        </div>
-    `;
-
-    // Type Specific Form Controls
-    if (w.type === 'category_block' || w.type === 'category_grid') {
-        let catOptions = '';
-        ALL_CATEGORIES.forEach(c => {
-            const isSel = (s.category_slug === c.slug) ? 'selected' : '';
-            catOptions += `<option value="${escapeHtml(c.slug)}" ${isSel}>${escapeHtml(c.name)} (${escapeHtml(c.slug)})</option>`;
-        });
-
-        fieldsHtml += `
-            <div class="row g-3 mb-3">
-                <div class="col-md-8">
-                    <label class="form-label fw-bold small">Select Category</label>
-                    <select class="form-select form-select-sm" id="edit_category_slug">
-                        ${catOptions}
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small">Posts Limit</label>
-                    <input type="number" class="form-control form-control-sm" id="edit_limit" value="${s.limit || 4}" min="1" max="15">
-                </div>
-            </div>
-            <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" id="edit_show_more" ${s.show_more !== false ? 'checked' : ''}>
-                <label class="form-check-label small" for="edit_show_more">Display 'More News' Link</label>
-            </div>
-        `;
-    } else if (w.type === 'category_split' || w.type === 'full_width_split') {
-        let leftOptions = '';
-        let rightOptions = '';
-        ALL_CATEGORIES.forEach(c => {
-            leftOptions += `<option value="${escapeHtml(c.slug)}" ${s.left_category === c.slug ? 'selected' : ''}>${escapeHtml(c.name)}</option>`;
-            rightOptions += `<option value="${escapeHtml(c.slug)}" ${s.right_category === c.slug ? 'selected' : ''}>${escapeHtml(c.name)}</option>`;
-        });
-
-        fieldsHtml += `
-            <div class="border rounded p-3 mb-3 bg-light">
-                <h6 class="fw-bold small text-primary mb-2">Left Column</h6>
-                <div class="row g-2">
-                    <div class="col-md-6">
-                        <label class="form-label small">Category</label>
-                        <select class="form-select form-select-sm" id="edit_left_category">${leftOptions}</select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small">Custom Title (Optional)</label>
-                        <input type="text" class="form-control form-control-sm" id="edit_left_title" value="${escapeHtml(s.left_title || '')}">
-                    </div>
-                </div>
-            </div>
-
-            <div class="border rounded p-3 mb-3 bg-light">
-                <h6 class="fw-bold small text-primary mb-2">Right Column</h6>
-                <div class="row g-2">
-                    <div class="col-md-6">
-                        <label class="form-label small">Category</label>
-                        <select class="form-select form-select-sm" id="edit_right_category">${rightOptions}</select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small">Custom Title (Optional)</label>
-                        <input type="text" class="form-control form-control-sm" id="edit_right_title" value="${escapeHtml(s.right_title || '')}">
-                    </div>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-bold small">Posts Count per Column</label>
-                <input type="number" class="form-control form-control-sm" id="edit_limit" value="${s.limit || 4}" min="1" max="10" style="max-width: 150px;">
-            </div>
-        `;
-    } else if (w.type === 'ad_banner') {
-        const positions = [
-            { key: 'after_lead', label: 'After Lead Banner (970x90 or responsive)' },
-            { key: 'header_right', label: 'Header Right Banner (728x90)' },
-            { key: 'sidebar', label: 'Sidebar Top Banner' },
-            { key: 'sidebar_bottom', label: 'Sidebar Bottom Banner' },
-            { key: 'inside_article', label: 'Inside Article Banner' }
-        ];
-
-        let adOptions = '';
-        positions.forEach(p => {
-            adOptions += `<option value="${p.key}" ${s.position === p.key ? 'selected' : ''}>${p.label}</option>`;
-        });
-
-        fieldsHtml += `
-            <div class="mb-3">
-                <label class="form-label fw-bold small">Select Advertisement Slot</label>
-                <select class="form-select form-select-sm" id="edit_ad_position">${adOptions}</select>
-                <small class="text-muted">To manage banner images or target URLs, visit <a href="ads-manager.php" target="_blank">Advertisement Banners</a>.</small>
-            </div>
-            <div class="mb-3">
-                <label class="form-label fw-bold small">Or Custom Ad Code (Optional)</label>
-                <textarea class="form-control font-monospace small" id="edit_ad_custom_code" rows="3" placeholder="<div ...> or Google AdSense code">${escapeHtml(s.custom_code || '')}</textarea>
-            </div>
-        `;
-    } else if (w.type === 'sidebar_tabs') {
-        fieldsHtml += `
-            <div class="mb-3">
-                <label class="form-label fw-bold small">Posts Limit (per tab)</label>
-                <input type="number" class="form-control form-control-sm" id="edit_limit" value="${s.limit || 7}" min="3" max="15" style="max-width: 150px;">
-            </div>
-        `;
-    } else if (w.type === 'hero_lead') {
-        fieldsHtml += `
-            <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-bold small">Bottom Thumbnails Count</label>
-                    <input type="number" class="form-control form-control-sm" id="edit_bottom_thumbs" value="${s.bottom_thumbs || 3}" min="0" max="6">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold small">Right Sub-leads Count</label>
-                    <input type="number" class="form-control form-control-sm" id="edit_sub_leads" value="${s.sub_leads || 3}" min="1" max="6">
-                </div>
-            </div>
-        `;
-    } else if (w.type === 'custom_html') {
-        fieldsHtml += `
-            <div class="mb-3">
-                <label class="form-label fw-bold small">Custom HTML / Embed Code</label>
-                <textarea class="form-control font-monospace small" id="edit_html_content" rows="6" placeholder="<div>Custom HTML...</div>">${escapeHtml(s.content || '')}</textarea>
-            </div>
-        `;
-    } else if (w.type === 'multimedia_gallery') {
-        fieldsHtml += `
-            <div class="mb-3">
-                <label class="form-label fw-bold small">Gallery Items Count</label>
-                <input type="number" class="form-control form-control-sm" id="edit_limit" value="${s.limit || 4}" min="2" max="8" style="max-width: 150px;">
-            </div>
-        `;
-    }
-
-    container.innerHTML = fieldsHtml;
-
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('widgetSettingsModal'));
-    modal.show();
-}
-
-/**
- * Apply settings from modal back into active widget
- */
-function applyWidgetSettings() {
-    if (activeEditingIndex < 0 || !currentWidgets[activeEditingIndex]) return;
-    const w = currentWidgets[activeEditingIndex];
-
-    w.title = document.getElementById('edit_title').value.trim();
-    w.container = document.getElementById('edit_container').value;
-
-    if (!w.settings) w.settings = {};
-
-    if (w.type === 'category_block' || w.type === 'category_grid') {
-        w.settings.category_slug = document.getElementById('edit_category_slug').value;
-        w.settings.limit = parseInt(document.getElementById('edit_limit').value, 10) || 4;
-        w.settings.show_more = document.getElementById('edit_show_more').checked;
-    } else if (w.type === 'category_split' || w.type === 'full_width_split') {
-        w.settings.left_category = document.getElementById('edit_left_category').value;
-        w.settings.left_title = document.getElementById('edit_left_title').value.trim();
-        w.settings.right_category = document.getElementById('edit_right_category').value;
-        w.settings.right_title = document.getElementById('edit_right_title').value.trim();
-        w.settings.limit = parseInt(document.getElementById('edit_limit').value, 10) || 4;
-    } else if (w.type === 'ad_banner') {
-        w.settings.position = document.getElementById('edit_ad_position').value;
-        w.settings.custom_code = document.getElementById('edit_ad_custom_code').value;
-    } else if (w.type === 'hero_lead') {
-        w.settings.bottom_thumbs = parseInt(document.getElementById('edit_bottom_thumbs').value, 10) || 3;
-        w.settings.sub_leads = parseInt(document.getElementById('edit_sub_leads').value, 10) || 3;
-    } else if (w.type === 'custom_html') {
-        w.settings.content = document.getElementById('edit_html_content').value;
-    } else if (w.type === 'sidebar_tabs') {
-        w.settings.limit = parseInt(document.getElementById('edit_limit').value, 10) || 7;
-    } else if (w.type === 'multimedia_gallery') {
-        w.settings.limit = parseInt(document.getElementById('edit_limit').value, 10) || 4;
-    }
-
-    renderCanvas();
-    updateLivePreview();
-
-    // Close modal
-    const modalEl = document.getElementById('widgetSettingsModal');
-    const modal = bootstrap.Modal.getInstance(modalEl);
-    if (modal) modal.hide();
-
-    showToast('Widget settings updated.');
-}
-
-/**
- * Real-Time Live Preview Sync (WordPress/Elementor-Style)
- */
-let previewDebounceTimer = null;
-function updateLivePreview() {
-    const syncBadge = document.getElementById('liveSyncStatus');
-    if (syncBadge) {
-        syncBadge.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" style="width: 8px; height: 8px;"></span>Syncing...`;
-        syncBadge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle d-inline-flex align-items-center gap-1';
-    }
-
-    clearTimeout(previewDebounceTimer);
-    previewDebounceTimer = setTimeout(() => {
-        const iframe = document.getElementById('livePreviewFrame');
-        if (!iframe) return;
-
-        const formData = new FormData();
-        formData.append('page', PAGE_SLUG);
-        formData.append('layout_data', JSON.stringify(currentWidgets));
-
-        fetch('live-preview.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.text())
-        .then(html => {
-            iframe.srcdoc = html;
-            if (syncBadge) {
-                syncBadge.innerHTML = `<span class="spinner-grow spinner-grow-sm text-success" style="width: 7px; height: 7px;"></span>Sync Active`;
-                syncBadge.className = 'badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1';
-            }
-        })
-        .catch(err => {
-            console.error('Preview sync failed:', err);
-            if (syncBadge) {
-                syncBadge.innerHTML = `<i class="bi bi-exclamation-triangle text-danger"></i>Sync Issue`;
-                syncBadge.className = 'badge bg-danger-subtle text-danger border border-danger-subtle d-inline-flex align-items-center gap-1';
-            }
-        });
-    }, 120);
-}
-
-/**
- * Refresh live preview manually
- */
-function refreshLivePreview() {
-    updateLivePreview();
-    showToast('Live preview refreshed.');
-}
-
-/**
- * Switch Builder View Mode: 'split', 'canvas', 'preview'
- */
-function setBuilderMode(mode) {
-    currentMode = mode;
-    const builderCol = document.getElementById('builderCol');
-    const previewCol = document.getElementById('previewCol');
-    const btnSplit = document.getElementById('btnModeSplit');
-    const btnCanvas = document.getElementById('btnModeCanvas');
-    const btnPreview = document.getElementById('btnModePreview');
-
-    btnSplit.classList.remove('active', 'btn-white', 'shadow-sm');
-    btnCanvas.classList.remove('active', 'btn-white', 'shadow-sm');
-    btnPreview.classList.remove('active', 'btn-white', 'shadow-sm');
-
-    if (mode === 'split') {
-        btnSplit.classList.add('active', 'btn-white', 'shadow-sm');
-        builderCol.className = 'col-xl-5 col-lg-6 d-block';
-        previewCol.className = 'col-xl-7 col-lg-6 d-block';
-    } else if (mode === 'canvas') {
-        btnCanvas.classList.add('active', 'btn-white', 'shadow-sm');
-        builderCol.className = 'col-12 d-block';
-        previewCol.className = 'd-none';
-    } else if (mode === 'preview') {
-        btnPreview.classList.add('active', 'btn-white', 'shadow-sm');
-        builderCol.className = 'd-none';
-        previewCol.className = 'col-12 d-block';
-    }
-}
-
-/**
- * Switch Preview Device Viewport: 'desktop', 'tablet', 'mobile'
- */
-function setPreviewSize(device) {
-    currentDevice = device;
-    const iframe = document.getElementById('livePreviewFrame');
-    const btnDesktop = document.getElementById('btnDevDesktop');
-    const btnTablet = document.getElementById('btnDevTablet');
-    const btnMobile = document.getElementById('btnDevMobile');
-
-    btnDesktop.classList.remove('active', 'btn-primary', 'text-white');
-    btnTablet.classList.remove('active', 'btn-primary', 'text-white');
-    btnMobile.classList.remove('active', 'btn-primary', 'text-white');
-
-    btnDesktop.classList.add('btn-light');
-    btnTablet.classList.add('btn-light');
-    btnMobile.classList.add('btn-light');
-
-    iframe.className = `device-${device}`;
-
-    if (device === 'desktop') {
-        btnDesktop.classList.add('active', 'btn-primary', 'text-white');
-        btnDesktop.classList.remove('btn-light');
-    } else if (device === 'tablet') {
-        btnTablet.classList.add('active', 'btn-primary', 'text-white');
-        btnTablet.classList.remove('btn-light');
-    } else if (device === 'mobile') {
-        btnMobile.classList.add('active', 'btn-primary', 'text-white');
-        btnMobile.classList.remove('btn-light');
-    }
-}
-
-/**
- * Save Layout via AJAX POST
- */
-function saveLayout() {
-    const btn = document.getElementById('btnSaveLayout');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Saving...`;
-
-    const formData = new FormData();
-    formData.append('action', 'save_layout');
-    formData.append('page_slug', PAGE_SLUG);
-    formData.append('layout_data', JSON.stringify(currentWidgets));
-
-    fetch('page-builder.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        if (data.success) {
-            showToast(data.message || 'Layout saved successfully!');
-            updateLivePreview();
-        } else {
-            alert(data.message || 'Error saving layout');
-        }
-    })
-    .catch(err => {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        alert('Server communication error: ' + err.message);
-    });
-}
-
-/**
- * Show toast message
- */
-function showToast(msg) {
-    const toastEl = document.getElementById('saveToast');
-    const msgEl = document.getElementById('saveToastMessage');
-    msgEl.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>${escapeHtml(msg)}`;
-    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-    toast.show();
-}
-
-/**
- * Auto Slug Generator for Create Page Modal
- */
-function autoSlug(val) {
-    const slug = val.toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .trim()
-        .replace(/[\s_-]+/g, '-');
-    document.getElementById('newPageSlug').value = slug;
-}
-
-/**
- * HTML Escaping
- */
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-// Initialize on DOM load
-document.addEventListener('DOMContentLoaded', function() {
-    renderCanvas();
-    updateLivePreview();
-
-    // Initialize SortableJS
-    const canvas = document.getElementById('widgetCanvas');
-    new Sortable(canvas, {
-        handle: '.widget-handle',
-        animation: 180,
-        ghostClass: 'sortable-ghost',
-        onEnd: function(evt) {
-            const oldIndex = evt.oldIndex;
-            const newIndex = evt.newIndex;
-            if (oldIndex !== newIndex) {
-                const movedItem = currentWidgets.splice(oldIndex, 1)[0];
-                currentWidgets.splice(newIndex, 0, movedItem);
-                renderCanvas();
-                updateLivePreview();
-                showToast('Widget order updated. Live preview refreshed.');
-            }
-        }
-    });
-});
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script src="assets/js/page-builder.js"></script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
