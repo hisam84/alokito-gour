@@ -209,31 +209,48 @@ function render_widget_ad_banner(array $widget, PDO $db, ?array $post = null): s
     $settings = $widget['settings'] ?? [];
     $position = $settings['position'] ?? 'after_lead';
     $customCode = $settings['custom_code'] ?? '';
+    $widgetId = (string)($widget['id'] ?? 'ad');
+
+    $inner = '';
 
     // If rendering on a single news page and this is the sidebar ad slot
-    if ($post && ($position === 'sidebar' || ($widget['id'] ?? '') === 'sec_side_top_ad')) {
+    if ($post && ($position === 'sidebar' || $widgetId === 'sec_side_top_ad')) {
         $adType = $post['sidebar_ad_type'] ?? 'global';
         if ($adType === 'none') {
             return '';
         }
         if ($adType === 'code' && !empty($post['sidebar_ad_code'])) {
-            return '<div class="ad-container ad-sidebar mb-3 text-center" data-widget-id="' . e($widget['id'] ?? 'ad') . '">' . $post['sidebar_ad_code'] . '</div>';
-        }
-        if ($adType === 'custom' && !empty($post['sidebar_ad_image'])) {
+            $inner = $post['sidebar_ad_code'];
+        } elseif ($adType === 'custom' && !empty($post['sidebar_ad_image'])) {
             $target = !empty($post['sidebar_ad_url']) ? e($post['sidebar_ad_url']) : '#';
-            return '<div class="ad-container ad-sidebar mb-3 text-center" data-widget-id="' . e($widget['id'] ?? 'ad') . '">
-                <a href="' . $target . '" target="_blank" rel="noopener" class="d-block w-100">
+            $inner = '<a href="' . $target . '" target="_blank" rel="noopener" class="d-block w-100">
                     <img src="' . e($post['sidebar_ad_image']) . '" alt="' . e($post['title'] ?? 'Advertisement') . '" class="img-fluid rounded border shadow-sm w-100" style="width: 100%; height: auto; display: block;">
-                </a>
-            </div>';
+                </a>';
         }
     }
 
-    if (!empty($customCode)) {
-        return '<div class="ad-container mb-3 text-center" data-widget-id="' . e($widget['id'] ?? 'ad') . '">' . $customCode . '</div>';
+    if ($inner === '' && !empty($customCode)) {
+        $inner = $customCode;
     }
 
-    return render_ad($position);
+    if ($inner === '') {
+        $inner = render_ad($position);
+    }
+
+    // Inside the builder canvas an empty slot still needs a visible, selectable block
+    if ($inner === '' && defined('ALOKITO_BUILDER_PREVIEW')) {
+        $inner = '<div class="ad-placeholder border border-2 border-dashed bg-light text-muted rounded p-4 d-flex flex-column align-items-center justify-content-center">
+                <i class="bi bi-badge-ad fs-3 text-secondary opacity-50 mb-1"></i>
+                <span class="fw-bold small text-secondary">বিজ্ঞাপনের স্লট</span>
+                <span class="small text-muted" style="font-size: 11px;">বিজ্ঞাপন ম্যানেজার থেকে ব্যানার আপলোড করুন</span>
+            </div>';
+    }
+
+    if ($inner === '') {
+        return '';
+    }
+
+    return '<div class="ad-container mb-3 text-center" data-widget-id="' . e($widgetId) . '">' . $inner . '</div>';
 }
 
 /**
@@ -674,7 +691,9 @@ function render_widget_sidebar_tabs(array $widget, PDO $db): string {
 function render_widget_district_filter(array $widget, PDO $db): string {
     require_once __DIR__ . '/bangladesh_geo.php';
     $title = !empty($widget['title']) ? $widget['title'] : 'আমার এলাকার খবর';
-    return render_area_filter_bar([], false, $title);
+    return '<div class="district-filter-widget" data-widget-id="' . e($widget['id'] ?? 'district_filter') . '">'
+        . render_area_filter_bar([], false, $title)
+        . '</div>';
 }
 
 /* Deprecated legacy district buttons */
