@@ -69,9 +69,9 @@ include __DIR__ . '/includes/ticker.php';
         </ol>
     </nav>
 
-    <div class="row g-4">
+    <div class="row g-4 layout-main-row">
         <!-- Main News Archive Area (8 Cols) -->
-        <div class="col-lg-8">
+        <div class="col-lg-8 layout-content-col">
             <div class="section-title">
                 <span><?= e($category['name']) ?></span>
                 <span class="text-muted small fw-normal">মোট খবর: <?= bn_number($totalPosts) ?> টি</span>
@@ -135,7 +135,7 @@ include __DIR__ . '/includes/ticker.php';
         </div>
 
         <!-- Sidebar Area (4 Cols) -->
-        <div class="col-lg-4">
+        <div class="col-lg-4 layout-sidebar-col">
             <?php include __DIR__ . '/includes/sidebar.php'; ?>
         </div>
     </div>

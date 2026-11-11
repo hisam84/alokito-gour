@@ -64,9 +64,9 @@ include __DIR__ . '/includes/ticker.php';
         </ol>
     </nav>
 
-    <div class="row g-4">
+    <div class="row g-4 layout-main-row">
         <!-- Main Search Area (8 Cols) -->
-        <div class="col-lg-8">
+        <div class="col-lg-8 layout-content-col">
             <!-- Search Input Box -->
             <div class="card border-0 shadow-sm p-3 mb-4">
                 <form action="/search" method="GET" class="row g-2 align-items-center">
@@ -150,7 +150,7 @@ include __DIR__ . '/includes/ticker.php';
         </div>
 
         <!-- Sidebar Area (4 Cols) -->
-        <div class="col-lg-4">
+        <div class="col-lg-4 layout-sidebar-col">
             <?php include __DIR__ . '/includes/sidebar.php'; ?>
         </div>
     </div>

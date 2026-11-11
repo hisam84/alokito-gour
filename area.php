@@ -107,9 +107,9 @@ include __DIR__ . '/includes/ticker.php';
     <!-- Interactive Cascading Area Filter Bar -->
     <?= render_area_filter_bar(['division' => $division, 'district' => $district, 'upazila' => $upazila], false) ?>
 
-    <div class="row g-4 mt-1">
+    <div class="row g-4 mt-1 layout-main-row">
         <!-- Main Area News Content Column (8 Cols) -->
-        <div class="col-lg-8">
+        <div class="col-lg-8 layout-content-col">
             <!-- Section Header -->
             <div class="section-title d-flex justify-content-between align-items-center mb-3">
                 <span class="fs-5">
@@ -225,7 +225,7 @@ include __DIR__ . '/includes/ticker.php';
         </div>
 
         <!-- Sidebar Column (4 Cols) -->
-        <div class="col-lg-4">
+        <div class="col-lg-4 layout-sidebar-col">
             <?php include __DIR__ . '/includes/sidebar.php'; ?>
         </div>
     </div>

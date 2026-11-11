@@ -472,10 +472,38 @@ a:hover {
 }
 
 /* ========================================================
-   SIDEBAR & TABS
+   SIDEBAR & TABS (Right Side Block: 310px Fixed Width)
    ======================================================== */
-.ad-sidebar {
+.layout-sidebar-col,
+.page-builder-layout > .row > .col-lg-4,
+.layout-main-row > .col-lg-4 {
     width: 100%;
+}
+
+@media (min-width: 992px) {
+    .layout-sidebar-col,
+    .page-builder-layout > .row > .col-lg-4,
+    .layout-main-row > .col-lg-4 {
+        width: 310px !important;
+        max-width: 310px !important;
+        flex: 0 0 310px !important;
+        box-sizing: content-box !important;
+    }
+
+    .layout-content-col,
+    .page-builder-layout > .row > .col-lg-8,
+    .layout-main-row > .col-lg-8 {
+        width: calc(100% - 334px) !important;
+        max-width: calc(100% - 334px) !important;
+        flex: 0 0 calc(100% - 334px) !important;
+    }
+}
+
+.ad-sidebar {
+    width: 310px;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
     margin-bottom: 20px;
 }
 
@@ -486,17 +514,20 @@ a:hover {
 
 .ad-sidebar img {
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 310px !important;
     height: auto !important;
     max-height: none !important;
     display: block;
     border-radius: 8px;
+    margin: 0 auto;
 }
 
 .ad-sidebar .ad-placeholder {
     width: 100%;
+    max-width: 310px;
     min-height: 220px;
     height: auto;
+    margin: 0 auto;
 }
 
 .sidebar-widget {
@@ -505,6 +536,17 @@ a:hover {
     border: 1px solid var(--border-light);
     padding: 16px;
     margin-bottom: 24px;
+    width: 100%;
+    max-width: 310px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.area-filter-sidebar {
+    width: 100%;
+    max-width: 310px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .sidebar-tabs .nav-link {

@@ -38,7 +38,7 @@ Extracted through Reverse-Engineering (REA) from `https://alokitogour.com/`:
 | :--- | :--- | :--- |
 | **Mobile** | `< 640px` | 1-column stacked flow. Sticky header with compact logo (height: 44px). Drawer menu via hamburger toggle. Ticker condensed. Images scale 100% width. Sidebar moves below category blocks. |
 | **Tablet** | `640px - 1024px` | 2-column grid. Header displays logo and date. Navigation items wrap or truncate into "আরও" dropdown. Sidebar occupies 33% or stacks. |
-| **Desktop** | `> 1024px` | Max container width `1240px` centered. Full topbar with date and social icons. 3-column layout (Main content 8 cols, Sidebar 4 cols). Sticky navigation bar with orange separators. |
+| **Desktop** | `> 1024px` | Max container width `1240px` centered. Full topbar with date and social icons. 2-column layout (Main content flexible, Sidebar fixed 310px). Sticky navigation bar with orange separators. |
 
 ---
 
@@ -84,7 +84,7 @@ Extracted through Reverse-Engineering (REA) from `https://alokitogour.com/`:
 | +---------------------+  +-----------------------+ | | 3. তৃতীয় খবর শিরোনাম...    | |
 |                                                    | +--------------------------+ |
 | [ Advertisement Banner: after_lead (728x90) ]      |                              |
-|                                                    | [ Ad Slot: sidebar (300x250) ]
+|                                                    | [ Ad Slot: sidebar (310px) ]
 | [ জাতীয় ও আন্তর্জাতিক ]                             |                              |
 | +---------------------+  +-----------------------+ | +--------------------------+ |
 | | [Thumb] বায়ুদূষণ... |  | [Thumb] দিল্লির অ্যালার্ট| | | [ আমার এলাকার খবর ]      | |

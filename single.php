@@ -82,9 +82,9 @@ include __DIR__ . '/includes/ticker.php';
         </ol>
     </nav>
 
-    <div class="row g-4">
+    <div class="row g-4 layout-main-row">
         <!-- Main Article Column (8 Cols) -->
-        <div class="col-lg-8">
+        <div class="col-lg-8 layout-content-col">
             <article class="bg-white p-4 rounded-3 border shadow-sm">
                 <!-- Article Headline -->
                 <header class="article-header">
@@ -203,7 +203,7 @@ include __DIR__ . '/includes/ticker.php';
         </div>
 
         <!-- Sidebar Area (4 Cols) - Powered by Widget Builder & Article Ad Settings -->
-        <div class="col-lg-4">
+        <div class="col-lg-4 layout-sidebar-col">
             <?php render_news_sidebar($post, $db); ?>
         </div>
     </div>

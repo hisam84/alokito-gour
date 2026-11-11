@@ -839,13 +839,13 @@ function render_page_layout(string $slug, PDO $db, array $options = []): void {
 
     // 1. Render Main Section with Sidebar (8 cols + 4 cols) if main widgets exist
     if (!empty($mainWidgets)) {
-        echo '<div class="row g-4">';
-        echo '    <div class="col-lg-8">';
+        echo '<div class="row g-4 layout-main-row">';
+        echo '    <div class="col-lg-8 layout-content-col">';
         foreach ($mainWidgets as $w) {
             echo render_single_widget($w, $db);
         }
         echo '    </div>';
-        echo '    <div class="col-lg-4">';
+        echo '    <div class="col-lg-4 layout-sidebar-col">';
         include __DIR__ . '/sidebar.php';
         echo '    </div>';
         echo '</div>';

@@ -248,8 +248,9 @@ include dirname(__DIR__) . '/includes/ticker.php';
         </div>
     <?php elseif ($slug === 'news_sidebar'): ?>
         <!-- News Sidebar In-Context Preview -->
-        <div class="row g-4">
-            <div class="col-lg-8">
+        <div class="row g-4 layout-main-row">
+            <!-- Simulated Article (8 Cols) -->
+            <div class="col-lg-8 layout-content-col">
                 <article class="bg-white p-4 rounded-3 border shadow-sm mb-4">
                     <span class="badge bg-primary-subtle text-primary mb-2"><?= e($samplePost['category_name'] ?? 'জাতীয়') ?></span>
                     <h2 class="fw-bold mb-3"><?= e($samplePost['title'] ?? 'নমুনা সংবাদ শিরোনাম') ?></h2>
@@ -272,7 +273,8 @@ include dirname(__DIR__) . '/includes/ticker.php';
                 </article>
             </div>
 
-            <div class="col-lg-4">
+            <!-- Live Sidebar Being Customized (4 Cols) -->
+            <div class="col-lg-4 layout-sidebar-col">
                 <div class="p-2 border border-warning rounded bg-light mb-2 text-center small text-warning fw-bold">
                     <i class="bi bi-arrow-down-circle me-1"></i>Live Sidebar Blocks
                 </div>
