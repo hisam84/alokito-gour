@@ -62,6 +62,19 @@ $initialRawDate = date('Y-m-d', strtotime($preloadedPost['created_at'] ?? ($rece
 $initialThumb = $preloadedPost['thumbnail'] ?? ($recentPosts[0]['thumbnail'] ?? '');
 $initialPostId = $preloadedPost['id'] ?? ($recentPosts[0]['id'] ?? 0);
 
+// Resolve Organization Branding & Credit image path
+$creditImgUrl = '../assets/images/alokito-gour-credit.png';
+if (!empty($settings['watermark_path'])) {
+    $wPath = trim($settings['watermark_path']);
+    if (str_starts_with($wPath, 'http://') || str_starts_with($wPath, 'https://') || str_starts_with($wPath, 'data:')) {
+        $creditImgUrl = $wPath;
+    } elseif (str_starts_with($wPath, '/')) {
+        $creditImgUrl = '..' . $wPath;
+    } else {
+        $creditImgUrl = '../' . $wPath;
+    }
+}
+
 include __DIR__ . '/includes/header.php';
 ?>
 
@@ -476,14 +489,36 @@ include __DIR__ . '/includes/header.php';
 
             <!-- 4. Organization Branding & Credit -->
             <div class="control-card">
-                <div class="control-card-header d-flex justify-content-between align-items-center mb-0 pb-0 border-0">
+                <div class="control-card-header d-flex justify-content-between align-items-center mb-2 pb-0 border-0">
                     <span><i class="bi bi-award text-info"></i> 4. Organization Branding & Credit</span>
-                    <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2">
-                        <i class="bi bi-lock-fill me-1"></i> Fixed (Size: 95%, Y: 800px)
+                    <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2" id="creditStatusBadge">
+                        <i class="bi bi-check-circle-fill me-1"></i> Active (Y: 800px)
                     </span>
                 </div>
-                <div class="form-text mt-2" style="font-size:0.75rem;">
-                    Official portal branding, logo, social media handles, and website URL are rendered according to your site configuration.
+                <div class="d-flex align-items-center justify-content-between p-2 bg-light rounded border mb-2">
+                    <div class="d-flex align-items-center gap-2 overflow-hidden">
+                        <div class="bg-dark rounded p-1 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 32px;">
+                            <img id="creditPreviewThumb" src="<?= e($creditImgUrl) ?>" alt="Branding" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                        <div class="text-truncate">
+                            <span class="small fw-bold text-dark d-block text-truncate" id="creditLabelText">
+                                <?= !empty($settings['watermark_path']) ? 'কাস্টম ব্র্যান্ডিং ওয়াটারমার্ক' : e($settings['site_title'] ?? 'Alokito Gour') . ' অফিসিয়াল ব্র্যান্ডিং' ?>
+                            </span>
+                            <span class="text-muted" style="font-size: 0.7rem;">লোগো, সোশ্যাল হ্যান্ডেল ও ওয়েবসাইট URL</span>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-1 flex-shrink-0">
+                        <input type="file" id="customCreditInput" accept="image/*" class="d-none">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('customCreditInput').click()" title="কাস্টম ফটো কার্ড ব্র্যান্ডিং আপলোড করুন">
+                            <i class="bi bi-upload"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnResetCredit" title="অফিসিয়াল ডিফল্ট ব্র্যান্ডিং ফিরিয়ে আনুন">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-text" style="font-size:0.75rem;">
+                    অফিসিয়াল পোর্টাল ব্র্যান্ডিং, লোগো, সোশ্যাল মিডিয়া ও ওয়েবসাইট ইউআরএল কার্ডের নির্ধারিত ৮০০px পজিশনে প্রদর্শিত হচ্ছে।
                 </div>
             </div>
 
@@ -788,6 +823,9 @@ document.addEventListener('DOMContentLoaded', function() {
     frameImage.crossOrigin = 'anonymous';
     let isFrameLoaded = false;
 
+    const defaultCreditUrl = '../assets/images/alokito-gour-credit.png';
+    let configuredCreditUrl = '<?= e($creditImgUrl) ?>';
+
     let creditImage = new Image();
     creditImage.crossOrigin = 'anonymous';
     let isCreditLoaded = false;
@@ -810,12 +848,32 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load Organization Credit Image
     creditImage.onload = () => {
         isCreditLoaded = true;
+        const thumb = document.getElementById('creditPreviewThumb');
+        if (thumb && thumb.src !== creditImage.src) {
+            thumb.src = creditImage.src;
+        }
+        const badge = document.getElementById('creditStatusBadge');
+        if (badge) {
+            badge.className = 'badge bg-success-subtle text-success border border-success-subtle py-1 px-2';
+            badge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Active (Y: 800px)';
+        }
         renderCard();
     };
     creditImage.onerror = () => {
-        console.warn('Could not load credit image');
+        console.warn('Could not load credit image, attempting fallback to default branding...');
+        if (!creditImage.src.includes('alokito-gour-credit.png')) {
+            creditImage.src = defaultCreditUrl;
+        } else {
+            isCreditLoaded = false;
+            const badge = document.getElementById('creditStatusBadge');
+            if (badge) {
+                badge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle py-1 px-2';
+                badge.innerHTML = '<i class="bi bi-type me-1"></i> Typography Mode';
+            }
+            renderCard();
+        }
     };
-    creditImage.src = '<?= !empty($settings["watermark_path"]) ? e($settings["watermark_path"]) : (!empty($settings["logo_path"]) ? e($settings["logo_path"]) : "../assets/images/alokito-gour-credit.png") ?>';
+    creditImage.src = configuredCreditUrl;
 
     // Load initial news thumbnail if available
     const initialThumbUrl = '<?= !empty($initialThumb) ? e($initialThumb) : "" ?>';
@@ -1007,16 +1065,51 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.restore();
         }
 
-        // 6. Draw Organization Credit / Logo Info (Fixed Size: 95%, Position Y: 800px)
+        // 6. Draw Organization Credit / Logo Info (Fixed Position Y: 800px to 995px)
         if (isCreditLoaded && creditImage.naturalWidth > 0) {
             ctx.save();
-            const scale = 0.95; // Fixed scale (95%)
-            const creditW = creditImage.naturalWidth * scale;
-            const creditH = creditImage.naturalHeight * scale;
+            const maxCreditW = 900;
+            const maxCreditH = 190;
+            const imgW = creditImage.naturalWidth;
+            const imgH = creditImage.naturalHeight;
+
+            let scale = 0.95;
+            if (imgW * scale > maxCreditW || imgH * scale > maxCreditH) {
+                scale = Math.min(maxCreditW / imgW, maxCreditH / imgH);
+            }
+
+            const creditW = imgW * scale;
+            const creditH = imgH * scale;
             const creditX = (1000 - creditW) / 2;
-            const creditY = 800; // Fixed position Y = 800px
+            const creditY = 800 + (190 - creditH) / 2;
 
             ctx.drawImage(creditImage, creditX, creditY, creditW, creditH);
+            ctx.restore();
+        } else {
+            // Dynamic High-Fidelity Text/Vector Fallback if image fails or is unavailable
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Portal Name
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '700 36px "Hind Siliguri", "Anek Bangla", sans-serif';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+            ctx.shadowBlur = 8;
+            ctx.fillText('<?= addslashes($settings["site_title"] ?? "Alokito Gour - আলোকিত গৌড়") ?>', 500, 845);
+
+            // Website URL & Tagline
+            ctx.fillStyle = '#f3730d';
+            ctx.font = '600 20px "Hind Siliguri", sans-serif';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 4;
+            ctx.fillText('<?= addslashes(!empty($settings["site_tagline"]) ? $settings["site_tagline"] : "www.alokitogour.com") ?>', 500, 890);
+
+            // Social handle info
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = '500 16px "Hind Siliguri", sans-serif';
+            ctx.fillText('<?= addslashes(str_replace(["https://", "http://"], "", $settings["facebook_url"] ?? "facebook.com/alokitogour")) ?>', 500, 925);
+
             ctx.restore();
         }
 
@@ -1222,6 +1315,38 @@ document.addEventListener('DOMContentLoaded', function() {
             reader.readAsDataURL(file);
         }
     });
+
+    // Custom Organization Credit / Branding Upload Override
+    const customCreditInput = document.getElementById('customCreditInput');
+    const btnResetCredit = document.getElementById('btnResetCredit');
+
+    if (customCreditInput) {
+        customCreditInput.addEventListener('change', function(e) {
+            const file = e.target.files && e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    isCreditLoaded = false;
+                    creditImage.src = event.target.result;
+                    const label = document.getElementById('creditLabelText');
+                    if (label) label.textContent = 'আপলোডকৃত কাস্টম ব্র্যান্ডিং';
+                    showToast('কাস্টম ব্র্যান্ডিং ফটো কার্ডে যুক্ত হয়েছে!', 'success');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    if (btnResetCredit) {
+        btnResetCredit.addEventListener('click', function() {
+            if (customCreditInput) customCreditInput.value = '';
+            isCreditLoaded = false;
+            creditImage.src = defaultCreditUrl;
+            const label = document.getElementById('creditLabelText');
+            if (label) label.textContent = '<?= e($settings['site_title'] ?? 'Alokito Gour') ?> অফিসিয়াল ব্র্যান্ডিং';
+            showToast('ডিফল্ট ব্র্যান্ডিং ফিরিয়ে আনা হয়েছে!', 'info');
+        });
+    }
 
     // News Dropdown Selection
     newsSelect.addEventListener('change', function() {

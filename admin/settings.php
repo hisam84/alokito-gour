@@ -412,7 +412,7 @@ include __DIR__ . '/includes/header.php';
                         </div>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="border rounded p-3 bg-light">
                             <label class="form-label small fw-bold text-secondary">মোবাইল হেডার লোগো (Mobile Header)</label>
                             <div class="mb-2 p-2 bg-white rounded text-center border">
@@ -427,7 +427,22 @@ include __DIR__ . '/includes/header.php';
                         </div>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light">
+                            <label class="form-label small fw-bold text-secondary">ফটো কার্ড ব্র্যান্ডিং / ওয়াটারমার্ক (Card Credit)</label>
+                            <div class="mb-2 p-2 bg-dark rounded text-center border" style="height: 55px; display:flex; align-items:center; justify-content:center;">
+                                <?php if (!empty($settings['watermark_path'])): ?>
+                                    <img src="<?= e($settings['watermark_path']) ?>" alt="Photo Card Credit" class="img-fluid" style="max-height: 40px;">
+                                <?php else: ?>
+                                    <img src="../assets/images/alokito-gour-credit.png" alt="Default Credit" class="img-fluid" style="max-height: 40px;">
+                                <?php endif; ?>
+                            </div>
+                            <input type="file" class="form-control form-control-sm mb-2" name="watermark" accept="image/*">
+                            <input type="url" class="form-control form-control-sm" name="custom_watermark_url" placeholder="বা অনলাইন ওয়াটারমার্ক লিংক" value="<?= (str_starts_with($settings['watermark_path'] ?? '', 'http')) ? e($settings['watermark_path']) : '' ?>">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
                         <div class="border rounded p-3 bg-light">
                             <label class="form-label small fw-bold text-secondary">ফেভিকন (Favicon - 32x32)</label>
                             <div class="mb-2 p-2 bg-white rounded text-center border" style="height: 55px; display:flex; align-items:center; justify-content:center;">
@@ -442,7 +457,7 @@ include __DIR__ . '/includes/header.php';
                         </div>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="border rounded p-3 bg-light">
                             <label class="form-label small fw-bold text-secondary">ডিফল্ট থাম্বনেইল (ছবি না থাকলে)</label>
                             <div class="mb-2 p-2 bg-white rounded text-center border" style="height: 55px; display:flex; align-items:center; justify-content:center;">
