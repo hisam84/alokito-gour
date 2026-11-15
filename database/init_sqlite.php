@@ -332,6 +332,10 @@ try {
         }
     }
 
+    // Run template schema extensions & seed default pages
+    require_once __DIR__ . '/auto_migrate.php';
+    run_template_migrations($pdo);
+
     echo "SUCCESS: Local SQLite database successfully created and seeded at: " . $dbFile . "\n";
     return $pdo;
 } catch (Exception $e) {

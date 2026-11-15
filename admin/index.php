@@ -8,7 +8,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/auth_guard.php';
 
-$pageTitle = 'Dashboard Overview | Alokito Gour';
+$settings = get_settings();
+$pageTitle = 'Dashboard Overview | ' . e($settings['site_title'] ?? 'News Portal');
 $db = get_db();
 
 // 1. Fetch KPI metrics
@@ -16,6 +17,10 @@ $totalPosts = (int)$db->query("SELECT COUNT(*) FROM `posts`")->fetchColumn();
 $totalViews = (int)$db->query("SELECT COALESCE(SUM(`views`), 0) FROM `posts`")->fetchColumn();
 $totalCategories = (int)$db->query("SELECT COUNT(*) FROM `categories`")->fetchColumn();
 $activeAds = (int)$db->query("SELECT COUNT(*) FROM `advertisements` WHERE `status` = 1")->fetchColumn();
+$totalPages = 0;
+try {
+    $totalPages = (int)$db->query("SELECT COUNT(*) FROM `pages`")->fetchColumn();
+} catch (Exception $e) {}
 
 // 2. Fetch Recent Posts
 $stmt = $db->query("
@@ -33,7 +38,7 @@ include __DIR__ . '/includes/header.php';
 <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
         <h4 class="fw-bold mb-1 text-dark">Welcome back, <?= e($_SESSION['admin_user_name'] ?? 'Admin') ?>!</h4>
-        <p class="text-muted small mb-0">Overview and real-time statistics of Alokito Gour news portal</p>
+        <p class="text-muted small mb-0">Overview and real-time statistics of <?= e($settings['site_title'] ?? 'News Portal') ?></p>
     </div>
     <a href="post-add.php" class="btn btn-warning text-white fw-medium shadow-sm d-flex align-items-center gap-1">
         <i class="bi bi-plus-circle"></i>

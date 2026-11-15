@@ -215,3 +215,31 @@ function upload_image_webp(array $file, string $targetDir = 'assets/uploads/news
 
     return null;
 }
+
+/**
+ * Get fallback thumbnail when post has no image.
+ */
+function get_default_thumbnail(): string {
+    $settings = get_settings();
+    if (!empty($settings['default_thumbnail'])) {
+        return $settings['default_thumbnail'];
+    }
+    return 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22800%22%20height%3D%22450%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20800%20450%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder%20text%20%7B%20fill%3A%2394a3b8%3Bfont-weight%3Abold%3Bfont-family%3Asans-serif%3Bfont-size%3A32pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Crect%20width%3D%22800%22%20height%3D%22450%22%20fill%3D%22%23f1f5f9%22%2F%3E%3Cg%20id%3D%22holder%22%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3E%E0%A6%96%E0%A6%AC%E0%A6%B0%20%E0%A6%9B%E0%A6%AC%E0%A6%BF%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fsvg%3E';
+}
+
+/**
+ * Get active CMS pages for header / footer navigation.
+ */
+function get_cms_pages(bool $footerOnly = false): array {
+    try {
+        $db = get_db();
+        $sql = "SELECT id, title, slug, show_in_menu, show_in_footer FROM `pages` WHERE `status` = 'published' ";
+        if ($footerOnly) {
+            $sql .= "AND `show_in_footer` = 1 ";
+        }
+        $sql .= "ORDER BY `order_index` ASC, `id` ASC";
+        return $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}

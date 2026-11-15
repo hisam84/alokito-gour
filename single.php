@@ -186,7 +186,7 @@ include __DIR__ . '/includes/ticker.php';
                             <div class="col-sm-6">
                                 <div class="news-card">
                                     <a href="/news/<?= (int)$rel['id'] ?>/<?= e($rel['slug']) ?>" class="card-thumb d-block">
-                                        <img src="<?= e($rel['thumbnail'] ?: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=500&q=80') ?>" alt="<?= e($rel['title']) ?>">
+                                        <img src="<?= e($rel['thumbnail'] ?: get_default_thumbnail()) ?>" alt="<?= e($rel['title']) ?>">
                                     </a>
                                     <div class="card-body">
                                         <h6 class="card-title">

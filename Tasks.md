@@ -96,3 +96,37 @@
 - [x] Undo/redo, keyboard shortcuts (`Ctrl+S`, `Ctrl+Z`, `Esc`, `Delete`) and unsaved-change guard
 - [x] CSRF-protected AJAX save endpoint with server-side widget whitelisting
 - [x] PHP syntax + DOM smoke tests (jsdom) for both builder and canvas overlay
+
+---
+
+## Phase 7: Commercial Multi-Client Turnkey Template Transformation
+- [x] White-Label Database Architecture:
+  - [x] Extended `settings` schema with comprehensive branding, theme colors, typography, editorial, social, regional, SEO, and agency white-label fields
+  - [x] Created `pages` table for rich legal and informational pages (About Us, Privacy Policy, Terms, Contact, Editorial Policy, Ad Rates)
+  - [x] Built seamless dual-driver auto-migrator (`database/auto_migrate.php`) for SQLite and MySQL
+  - [x] Updated `setup.sql` with the complete commercial schema and default page seeders
+- [x] Live Visual Theme Styler & Typography Engine:
+  - [x] Dynamic CSS variable injection (`:root`) in `includes/header.php`
+  - [x] Instant live color customizer (Primary, Secondary, Accent, Topbar, Header, Navbar, Footer backgrounds)
+  - [x] 1-click popular palette presets (Classic Orange, Royal Blue, Crimson Daily, Emerald Green, Modern Slate)
+  - [x] Multi-font Bengali typography engine (`SolaimanLipi`, `Kalpurush`, `Hind Siliguri`, `Anek Bangla`, `Noto Sans Bengali`) and base font-size scaler
+- [x] Complete White-Label Frontend & Inclusions Refactoring:
+  - [x] Purged all hardcoded portal names, addresses, phone numbers, and placeholder domains across all frontend and admin files
+  - [x] Refactored `includes/header.php`, `includes/navbar.php`, `includes/ticker.php`, `includes/sidebar.php`, and `includes/footer.php`
+  - [x] Dynamic district & regional news preference support in `area.php` and sidebar widgets
+  - [x] Branded Facebook Photo Card generator (`admin/photo-card.php`) with dynamic logo, watermark, and card export
+- [x] Custom & Legal Pages CMS:
+  - [x] Created `admin/pages.php` with full CRUD, Summernote WYSIWYG editor, menu/footer visibility toggles, and SEO meta tags
+  - [x] Upgraded `page.php` to render both drag-and-drop page builder layouts and standard rich-text CMS pages
+  - [x] Added clean routing in `.htaccess` and `router.php` (`/about-us`, `/privacy-policy`, `/contact`, `/page/{slug}`)
+- [x] Supercharged Admin Control Center:
+  - [x] Completely redesigned `admin/settings.php` into a modern 9-tab Commercial Control Center
+  - [x] White-labeled admin dashboard, sidebar, and login page
+  - [x] Added Agency / Developer credit white-label toggle with custom agency name & link
+- [x] Turnkey Web Installer & Setup Wizard:
+  - [x] Created 5-step interactive web installer (`install.php`) with environment checks, live DB connectivity test, initial branding, admin creation, and install lock
+  - [x] Configured automatic installer detection in `index.php`
+- [x] Validation & Documentation:
+  - [x] Automated PHP linting (`php -l`) across all project files (100% pass)
+  - [x] End-to-end endpoint verification with automated test suite (`scratch/test_endpoints.php`)
+  - [x] Authored complete buyer & reseller handbook (`TEMPLATE_GUIDE.md`)

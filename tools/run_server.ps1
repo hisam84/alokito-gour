@@ -2,7 +2,7 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 try {
-    $Host.UI.RawUI.WindowTitle = "Alokito Gour Local Server"
+    $Host.UI.RawUI.WindowTitle = "News Portal CMS Local Server"
 } catch {}
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -11,7 +11,7 @@ Set-Location $projectRoot
 
 function Show-Banner {
     Write-Host "======================================================================" -ForegroundColor Cyan
-    Write-Host "       ALOKITO GOUR NEWS PORTAL - LOCAL DEVELOPMENT SERVER            " -ForegroundColor Yellow
+    Write-Host "       TURNKEY NEWS PORTAL CMS - LOCAL DEVELOPMENT SERVER             " -ForegroundColor Yellow
     Write-Host "======================================================================" -ForegroundColor Cyan
     Write-Host ""
 }

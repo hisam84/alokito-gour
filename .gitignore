@@ -23,3 +23,8 @@ VERSION
 adapters/
 model_capabilities.yaml
 scripts/
+
+# Installed site secrets & locks
+config/installed.lock
+config/db_custom.php
+

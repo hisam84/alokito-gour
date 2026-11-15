@@ -104,14 +104,13 @@ $settings = get_settings();
             padding: 20px 30px 35px;
         }
         .btn-brand {
-            background-color: #f3730d;
-            border-color: #f3730d;
+            background-color: <?= e($settings['primary_color'] ?? '#f3730d') ?>;
+            border-color: <?= e($settings['primary_color'] ?? '#f3730d') ?>;
             color: #ffffff;
             font-weight: 600;
         }
         .btn-brand:hover {
-            background-color: #d96206;
-            border-color: #d96206;
+            opacity: 0.9;
             color: #ffffff;
         }
     </style>
@@ -123,7 +122,7 @@ $settings = get_settings();
         <?php if (!empty($settings['logo_path'])): ?>
             <img src="<?= e($settings['logo_path']) ?>" alt="Logo">
         <?php else: ?>
-            <h4 class="fw-bold text-dark mb-0">Alokito Gour</h4>
+            <h4 class="fw-bold text-dark mb-0"><?= e($settings['site_title'] ?? 'News Portal') ?></h4>
         <?php endif; ?>
         <p class="text-muted small mt-2 mb-0">Admin Control Panel Login</p>
     </div>

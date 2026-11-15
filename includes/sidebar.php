@@ -208,7 +208,14 @@ foreach ($matchingBlocks as $block):
 
     <?php elseif ($bType === 'district_filter'): ?>
         <!-- 3. Regional / District Filter Block -->
-        <?= render_area_filter_bar([], true, !empty($bTitle) ? $bTitle : 'আমার এলাকার খবর') ?>
+        <?php
+        $siteSettings = get_settings();
+        $defaultSelected = [
+            'division' => $siteSettings['default_division'] ?? '',
+            'district' => $siteSettings['default_district'] ?? ''
+        ];
+        ?>
+        <?= render_area_filter_bar($defaultSelected, true, !empty($bTitle) ? $bTitle : 'আমার এলাকার খবর') ?>
     <?php elseif ($bType === 'legacy_district_filter'): ?>
         <!-- 3. Regional / District Filter Block -->
         <div class="sidebar-widget mb-4" data-sidebar-block="district_filter">
@@ -218,22 +225,18 @@ foreach ($matchingBlocks as $block):
                 </h6>
             <?php endif; ?>
             <div class="d-flex flex-wrap gap-2">
-                <a href="/category/chapai-nawabganj" class="btn btn-sm btn-outline-secondary">চাঁপাইনবাবগঞ্জ</a>
-                <a href="/category/country" class="btn btn-sm btn-outline-secondary">রাজশাহী</a>
-                <a href="/category/country" class="btn btn-sm btn-outline-secondary">ঢাকা</a>
-                <a href="/category/country" class="btn btn-sm btn-outline-secondary">চট্টগ্রাম</a>
-                <a href="/category/country" class="btn btn-sm btn-outline-secondary">খুলনা</a>
-                <a href="/category/country" class="btn btn-sm btn-outline-secondary">বরিশাল</a>
-                <a href="/category/country" class="btn btn-sm btn-outline-secondary">সিলেট</a>
-                <a href="/category/country" class="btn btn-sm btn-outline-secondary">রংপুর</a>
-                <a href="/category/country" class="btn btn-sm btn-outline-secondary">ময়মনসিংহ</a>
+                <?php
+                $allDivisions = ['ঢাকা', 'চট্টগ্রাম', 'রাজশাহী', 'খুলনা', 'বরিশাল', 'সিলেট', 'রংপুর', 'ময়মনসিংহ'];
+                foreach ($allDivisions as $divName): ?>
+                    <a href="/area?division=<?= urlencode($divName) ?>" class="btn btn-sm btn-outline-secondary"><?= e($divName) ?></a>
+                <?php endforeach; ?>
             </div>
         </div>
 
     <?php elseif ($bType === 'category_news'): ?>
         <!-- 4. Category News List Block -->
         <?php 
-        $catSlug = $settings['category_slug'] ?? 'chapai-nawabganj';
+        $catSlug = $settings['category_slug'] ?? 'national';
         $catLimit = (int)($settings['limit'] ?? 5);
         $catNewsStmt = $sideDb->prepare("
             SELECT p.id, p.title, p.slug, p.thumbnail, p.created_at 

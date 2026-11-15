@@ -26,6 +26,9 @@ ServerSignature Off
     # Clean URL for Page Builder Pages: /page/{slug} -> page.php?slug=$1
     RewriteRule ^page/([^/]+)/?$ page.php?slug=$1 [L,QSA]
 
+    # Direct clean URLs for Legal & CMS Pages
+    RewriteRule ^(about-us|privacy-policy|terms|contact|editorial-policy|ad-rates)/?$ page.php?slug=$1 [L,QSA]
+
     # Standard Fallback for real files & directories
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d

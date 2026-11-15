@@ -1,20 +1,26 @@
 <?php
 /**
- * Admin Panel Sidebar Navigation
- * Alokito Gour Clone
+ * Admin Panel Sidebar Navigation - White-Label Multi-Client Template
  */
 
 declare(strict_types=1);
 
 $currentScript = basename($_SERVER['PHP_SELF']);
+$adminSettings = get_settings();
+$adminPortalTitle = $adminSettings['site_title'] ?? 'News Portal';
+$adminLogo = !empty($adminSettings['logo_path']) ? $adminSettings['logo_path'] : '';
 ?>
 <aside class="admin-sidebar">
     <div class="sidebar-brand">
-        <a href="index.php" class="text-white text-decoration-none d-flex align-items-center gap-2" title="Alokito Gour Admin">
-            <i class="bi bi-newspaper fs-4 text-warning sidebar-brand-icon flex-shrink-0"></i>
-            <div class="sidebar-brand-text">
-                <span class="d-block lh-1 text-white fw-bold">Alokito Gour</span>
-                <span class="d-block small text-warning" style="font-size:0.75rem;">Control Panel</span>
+        <a href="index.php" class="text-white text-decoration-none d-flex align-items-center gap-2" title="<?= e($adminPortalTitle) ?> Admin">
+            <?php if (!empty($adminLogo)): ?>
+                <img src="<?= e($adminLogo) ?>" alt="Logo" class="sidebar-brand-icon flex-shrink-0 bg-white p-1 rounded" style="max-height: 32px; max-width: 38px; object-fit: contain;">
+            <?php else: ?>
+                <i class="bi bi-newspaper fs-4 text-warning sidebar-brand-icon flex-shrink-0"></i>
+            <?php endif; ?>
+            <div class="sidebar-brand-text text-truncate" style="max-width: 170px;">
+                <span class="d-block lh-1 text-white fw-bold text-truncate" style="font-size: 0.95rem;"><?= e($adminPortalTitle) ?></span>
+                <span class="d-block small text-warning" style="font-size:0.75rem;">Control Center</span>
             </div>
         </a>
     </div>
@@ -27,7 +33,7 @@ $currentScript = basename($_SERVER['PHP_SELF']);
             </a>
         </li>
 
-        <li class="menu-header">News & Content</li>
+        <li class="menu-header">News & Editorial</li>
         <li>
             <a href="post-add.php" class="<?= $currentScript === 'post-add.php' ? 'active' : '' ?>" title="Publish New Post">
                 <i class="bi bi-pencil-square"></i>
@@ -50,6 +56,14 @@ $currentScript = basename($_SERVER['PHP_SELF']);
             <a href="categories.php" class="<?= $currentScript === 'categories.php' ? 'active' : '' ?>" title="Categories">
                 <i class="bi bi-tags"></i>
                 <span>Categories</span>
+            </a>
+        </li>
+
+        <li class="menu-header">Pages & Layout</li>
+        <li>
+            <a href="pages.php" class="<?= $currentScript === 'pages.php' ? 'active' : '' ?>" title="Custom & Legal Pages">
+                <i class="bi bi-file-earmark-richtext"></i>
+                <span>Custom Pages</span>
             </a>
         </li>
         <li>
@@ -75,11 +89,17 @@ $currentScript = basename($_SERVER['PHP_SELF']);
         <li>
             <a href="settings.php" class="<?= $currentScript === 'settings.php' ? 'active' : '' ?>" title="Site Settings">
                 <i class="bi bi-sliders"></i>
-                <span>Site Settings</span>
+                <span>Customizer & Settings</span>
             </a>
         </li>
 
-        <li class="menu-header">Account</li>
+        <li class="menu-header">Quick Links</li>
+        <li>
+            <a href="/" target="_blank" rel="noopener" title="View Live Portal">
+                <i class="bi bi-box-arrow-up-right text-success"></i>
+                <span>View Live Site</span>
+            </a>
+        </li>
         <li>
             <a href="logout.php" class="text-danger" title="Logout">
                 <i class="bi bi-box-arrow-right"></i>
@@ -89,7 +109,7 @@ $currentScript = basename($_SERVER['PHP_SELF']);
     </ul>
 
     <div class="p-3 text-center border-top border-secondary text-muted small sidebar-footer" style="font-size: 0.75rem;">
-        <span class="sidebar-footer-text">Version 1.0.0 &bull; Production Ready</span>
-        <span class="sidebar-footer-short d-none">v1.0</span>
+        <span class="sidebar-footer-text">Turnkey Commercial Edition &bull; v2.0</span>
+        <span class="sidebar-footer-short d-none">v2.0</span>
     </div>
 </aside>

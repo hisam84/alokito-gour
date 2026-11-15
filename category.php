@@ -83,7 +83,7 @@ include __DIR__ . '/includes/ticker.php';
                         <div class="col-md-6">
                             <article class="news-card">
                                 <a href="/news/<?= (int)$post['id'] ?>/<?= e($post['slug']) ?>" class="card-thumb d-block">
-                                    <img src="<?= e($post['thumbnail'] ?: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=500&q=80') ?>" alt="<?= e($post['title']) ?>">
+                                    <img src="<?= e($post['thumbnail'] ?: get_default_thumbnail()) ?>" alt="<?= e($post['title']) ?>">
                                 </a>
                                 <div class="card-body">
                                     <h5 class="card-title">

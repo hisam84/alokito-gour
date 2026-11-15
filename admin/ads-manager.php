@@ -8,7 +8,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/auth_guard.php';
 
-$pageTitle = 'Advertisement Banners | Alokito Gour';
+$settings = get_settings();
+$pageTitle = 'Advertisement Banners | ' . e($settings['site_title'] ?? 'News Portal');
 $db = get_db();
 
 // Standard Placement Positions

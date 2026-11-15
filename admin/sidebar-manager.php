@@ -9,7 +9,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/auth_guard.php';
 
-$pageTitle = 'Sidebar & Custom Blocks | Alokito Gour';
+$settings = get_settings();
+$pageTitle = 'Sidebar & Custom Blocks | ' . e($settings['site_title'] ?? 'News Portal');
 $db = get_db();
 
 // Standard Block Types Definition
@@ -720,7 +721,7 @@ function insertTemplate(name) {
     } else if (name === 'hotline') {
         contentEl.value = '<div class="card bg-danger text-white border-0 shadow-sm p-3">\n  <h6 class="fw-bold mb-1"><i class="bi bi-telephone-inbound-fill me-1"></i>জরুরি হটলাইন</h6>\n  <p class="small mb-2">যেকোনো তথ্য ও সংবাদ জানাতে যোগাযোগ করুন:</p>\n  <h5 class="fw-bold mb-0">০১৩৩৩৪৭৯১৯২</h5>\n</div>';
     } else if (name === 'facebook') {
-        contentEl.value = '<div class="p-3 bg-light border rounded text-center">\n  <h6 class="fw-bold text-primary mb-2"><i class="bi bi-facebook me-1"></i>আমাদের ফেসবুক পেজ</h6>\n  <p class="small text-muted mb-2">প্রতিদিনের তাজা সংবাদ পেতে লাইক দিন আমাদের পেজে</p>\n  <a href="https://facebook.com/alokitogour" target="_blank" rel="noopener" class="btn btn-primary btn-sm px-3 fw-bold"><i class="bi bi-hand-thumbs-up-fill me-1"></i>Facebook Page</a>\n</div>';
+        contentEl.value = '<div class="p-3 bg-light border rounded text-center">\n  <h6 class="fw-bold text-primary mb-2"><i class="bi bi-facebook me-1"></i>আমাদের ফেসবুক পেজ</h6>\n  <p class="small text-muted mb-2">প্রতিদিনের তাজা সংবাদ পেতে লাইক দিন আমাদের পেজে</p>\n  <a href="https://facebook.com/yourpage" target="_blank" rel="noopener" class="btn btn-primary btn-sm px-3 fw-bold"><i class="bi bi-hand-thumbs-up-fill me-1"></i>Facebook Page</a>\n</div>';
     } else if (name === 'youtube') {
         contentEl.value = '<div class="ratio ratio-16x9 rounded overflow-hidden shadow-sm border">\n  <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="YouTube video" allowfullscreen></iframe>\n</div>';
     }

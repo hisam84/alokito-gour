@@ -7,6 +7,12 @@
 
 declare(strict_types=1);
 
+// Auto-detect fresh installation
+if (!file_exists(__DIR__ . '/config/installed.lock') && !file_exists(__DIR__ . '/config/db_custom.php') && !file_exists(__DIR__ . '/database/alokito_gour.sqlite')) {
+    header('Location: /install.php');
+    exit;
+}
+
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/widget_renderer.php';

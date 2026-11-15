@@ -8,7 +8,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/auth_guard.php';
 
-$pageTitle = 'Category Management | Alokito Gour';
+$settings = get_settings();
+$pageTitle = 'Category Management | ' . e($settings['site_title'] ?? 'News Portal');
 $db = get_db();
 $error = '';
 $editCategory = null;

@@ -10,7 +10,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/auth_guard.php';
 
 $db = get_db();
-$pageTitle = 'Page Builder | Alokito Gour';
+$settings = get_settings();
+$pageTitle = 'Page Builder | ' . e($settings['site_title'] ?? 'News Portal');
 
 /**
  * ------------------------------------------------------------------

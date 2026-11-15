@@ -8,7 +8,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/auth_guard.php';
 
-$pageTitle = 'All Posts List | Alokito Gour';
+$settings = get_settings();
+$pageTitle = 'All Posts List | ' . e($settings['site_title'] ?? 'News Portal');
 $db = get_db();
 
 // Handle Delete Request

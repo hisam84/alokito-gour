@@ -8,7 +8,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/auth_guard.php';
 
-$pageTitle = 'Facebook Photo Card Generator | Alokito Gour';
+$settings = get_settings();
+$pageTitle = 'Facebook Photo Card Generator | ' . e($settings['site_title'] ?? 'News Portal');
 $db = get_db();
 
 // Preload specific post if post_id provided in URL
@@ -482,7 +483,7 @@ include __DIR__ . '/includes/header.php';
                     </span>
                 </div>
                 <div class="form-text mt-2" style="font-size:0.75rem;">
-                    Official Alokito Gour logo, social media handles, and <code>www.alokitogour.com</code> are permanently locked at standard size and position.
+                    Official portal branding, logo, social media handles, and website URL are rendered according to your site configuration.
                 </div>
             </div>
 
@@ -814,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function() {
     creditImage.onerror = () => {
         console.warn('Could not load credit image');
     };
-    creditImage.src = '../assets/images/alokito-gour-credit.png';
+    creditImage.src = '<?= !empty($settings["watermark_path"]) ? e($settings["watermark_path"]) : (!empty($settings["logo_path"]) ? e($settings["logo_path"]) : "../assets/images/alokito-gour-credit.png") ?>';
 
     // Load initial news thumbnail if available
     const initialThumbUrl = '<?= !empty($initialThumb) ? e($initialThumb) : "" ?>';
@@ -1360,7 +1361,7 @@ document.addEventListener('DOMContentLoaded', function() {
     btnDownloadPng.addEventListener('click', function() {
         try {
             const dataUrl = canvas.toDataURL('image/png', 1.0);
-            const filename = `alokito-gour-card-${currentNewsId || 'news'}.png`;
+            const filename = `photo-card-${currentNewsId || 'news'}.png`;
             triggerDownload(dataUrl, filename);
             showToast('High-resolution PNG downloaded successfully!', 'success');
         } catch(err) {
@@ -1372,7 +1373,7 @@ document.addEventListener('DOMContentLoaded', function() {
     btnDownloadJpg.addEventListener('click', function() {
         try {
             const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-            const filename = `alokito-gour-card-${currentNewsId || 'news'}.jpg`;
+            const filename = `photo-card-${currentNewsId || 'news'}.jpg`;
             triggerDownload(dataUrl, filename);
             showToast('JPG photo card downloaded successfully!', 'success');
         } catch(err) {

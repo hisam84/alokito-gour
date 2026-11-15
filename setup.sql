@@ -5,20 +5,69 @@
 CREATE DATABASE IF NOT EXISTS `alokito_gour` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `alokito_gour`;
 
--- 1. Settings Table
+-- 1. Settings Table (Fully Customizable White-Label CMS)
 CREATE TABLE IF NOT EXISTS `settings` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `site_title` VARCHAR(255) NOT NULL DEFAULT 'Alokito Gour - আলোকিত গৌড়',
   `site_tagline` VARCHAR(255) NULL DEFAULT 'সত্যের সাথে, আগামীর পথে',
-  `logo_path` VARCHAR(255) NULL DEFAULT 'https://alokitogour.com/photos/logo-2024-09-18-02-37-58.png',
-  `favicon_path` VARCHAR(255) NULL DEFAULT 'https://alokitogour.com/photos/favicon-2024-12-22-17-06-58.png',
-  `editor_name` VARCHAR(150) NULL DEFAULT 'মোহাঃ আব্দুল্লাহ',
-  `publisher_name` VARCHAR(150) NULL DEFAULT 'মোহাঃ আব্দুল্লাহ',
+  `logo_path` VARCHAR(255) NULL,
+  `logo_footer` VARCHAR(255) NULL,
+  `logo_mobile` VARCHAR(255) NULL,
+  `favicon_path` VARCHAR(255) NULL,
+  `default_thumbnail` VARCHAR(255) NULL,
+  `watermark_path` VARCHAR(255) NULL,
+  `editor_name` VARCHAR(150) NULL DEFAULT 'প্রধান সম্পাদক',
+  `executive_editor` VARCHAR(150) NULL,
+  `advisory_editor` VARCHAR(150) NULL,
+  `publisher_name` VARCHAR(150) NULL DEFAULT 'প্রকাশক',
+  `gov_reg_no` VARCHAR(150) NULL,
   `office_address` TEXT NULL,
-  `contact_phone` VARCHAR(100) NULL DEFAULT '01333479192 (সম্পাদক), 01333479193 (অফিস)',
-  `contact_email` VARCHAR(100) NULL DEFAULT 'editor@alokitogour.com',
-  `facebook_url` VARCHAR(255) NULL DEFAULT 'https://facebook.com/alokitogour',
-  `youtube_url` VARCHAR(255) NULL DEFAULT 'https://youtube.com/@alokitogour',
+  `contact_phone` VARCHAR(100) NULL,
+  `contact_email` VARCHAR(100) NULL,
+  `copyright_text` TEXT NULL,
+  `tech_partner_name` VARCHAR(150) DEFAULT 'DataEnvelope',
+  `tech_partner_url` VARCHAR(255) DEFAULT 'https://www.dataenvelope.com/',
+  `show_tech_partner` TINYINT(1) DEFAULT 1,
+  `footer_about_text` TEXT NULL,
+  `primary_color` VARCHAR(20) DEFAULT '#f3730d',
+  `secondary_color` VARCHAR(20) DEFAULT '#c82333',
+  `accent_color` VARCHAR(20) DEFAULT '#0abb75',
+  `header_bg_color` VARCHAR(20) DEFAULT '#ffffff',
+  `topbar_bg_color` VARCHAR(20) DEFAULT '#f8f9fa',
+  `navbar_bg_color` VARCHAR(20) DEFAULT '#ffffff',
+  `footer_bg_color` VARCHAR(20) DEFAULT '#1a1e21',
+  `font_family` VARCHAR(50) DEFAULT 'SolaimanLipi',
+  `font_size_base` VARCHAR(10) DEFAULT '16px',
+  `theme_style` VARCHAR(30) DEFAULT 'classic_news',
+  `show_topbar` TINYINT(1) DEFAULT 1,
+  `show_date_bangla` TINYINT(1) DEFAULT 1,
+  `show_date_english` TINYINT(1) DEFAULT 0,
+  `show_weather` TINYINT(1) DEFAULT 1,
+  `weather_city` VARCHAR(100) DEFAULT 'ঢাকা',
+  `show_live_tv` TINYINT(1) DEFAULT 0,
+  `live_tv_url` VARCHAR(255) NULL,
+  `show_epaper` TINYINT(1) DEFAULT 0,
+  `epaper_url` VARCHAR(255) NULL,
+  `show_ticker` TINYINT(1) DEFAULT 1,
+  `ticker_title` VARCHAR(100) DEFAULT 'সংবাদ শিরোনাম',
+  `facebook_url` VARCHAR(255) NULL,
+  `youtube_url` VARCHAR(255) NULL,
+  `twitter_url` VARCHAR(255) NULL,
+  `instagram_url` VARCHAR(255) NULL,
+  `linkedin_url` VARCHAR(255) NULL,
+  `tiktok_url` VARCHAR(255) NULL,
+  `whatsapp_number` VARCHAR(100) NULL,
+  `whatsapp_channel_url` VARCHAR(255) NULL,
+  `telegram_url` VARCHAR(255) NULL,
+  `default_division` VARCHAR(100) DEFAULT 'ঢাকা',
+  `default_district` VARCHAR(100) DEFAULT 'ঢাকা',
+  `meta_description` TEXT NULL,
+  `meta_keywords` TEXT NULL,
+  `ga4_id` VARCHAR(50) NULL,
+  `fb_pixel_id` VARCHAR(50) NULL,
+  `google_site_verification` VARCHAR(100) NULL,
+  `custom_head_code` TEXT NULL,
+  `custom_footer_code` TEXT NULL,
   `ai_provider` VARCHAR(20) DEFAULT 'smart',
   `gemini_api_key` VARCHAR(255) NULL,
   `gemini_model` VARCHAR(50) DEFAULT 'gemini-1.5-flash',
@@ -98,14 +147,40 @@ CREATE TABLE IF NOT EXISTS `page_layouts` (
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 7. Custom Pages Table (Legal, About, Contact, Editorial Policy)
+CREATE TABLE IF NOT EXISTS `pages` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(255) NOT NULL UNIQUE,
+  `content` LONGTEXT NOT NULL,
+  `meta_title` VARCHAR(255) NULL,
+  `meta_description` TEXT NULL,
+  `status` VARCHAR(20) DEFAULT 'published',
+  `show_in_menu` TINYINT(1) DEFAULT 0,
+  `show_in_footer` TINYINT(1) DEFAULT 1,
+  `order_index` INT DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ========================================================
 -- SEED DATA
 -- ========================================================
 
 -- Settings
-INSERT INTO `settings` (`id`, `site_title`, `site_tagline`, `logo_path`, `favicon_path`, `editor_name`, `publisher_name`, `office_address`, `contact_phone`, `contact_email`, `facebook_url`, `youtube_url`)
-VALUES (1, 'Alokito Gour - আলোকিত গৌড়', 'সত্যের সাথে, আগামীর পথে', 'https://alokitogour.com/photos/logo-2024-09-18-02-37-58.png', 'https://alokitogour.com/photos/favicon-2024-12-22-17-06-58.png', 'মোহাঃ আব্দুল্লাহ', 'মোহাঃ আব্দুল্লাহ', 'ক্লাব সুপার মার্কেট (৪র্থ তলা), সদর, চাঁপাইনবাবগঞ্জ।', '01333479192 (সম্পাদক), 01333479193 (অফিস)', 'editor@alokitogour.com', 'https://facebook.com/alokitogour', 'https://youtube.com/@alokitogour')
+INSERT INTO `settings` (`id`, `site_title`, `site_tagline`, `logo_path`, `favicon_path`, `editor_name`, `publisher_name`, `office_address`, `contact_phone`, `contact_email`, `facebook_url`, `youtube_url`, `primary_color`, `secondary_color`, `accent_color`, `header_bg_color`, `topbar_bg_color`, `navbar_bg_color`, `footer_bg_color`, `font_family`, `show_topbar`, `show_ticker`, `default_division`, `default_district`, `tech_partner_name`, `tech_partner_url`, `show_tech_partner`, `footer_about_text`)
+VALUES (1, 'Alokito Gour - আলোকিত গৌড়', 'সত্যের সাথে, আগামীর পথে', 'https://alokitogour.com/photos/logo-2024-09-18-02-37-58.png', 'https://alokitogour.com/photos/favicon-2024-12-22-17-06-58.png', 'প্রধান সম্পাদক', 'প্রকাশক', 'প্রধান কার্যালয়, ঢাকা, বাংলাদেশ।', '+৮৮০ ১৭১১-০০০০০০', 'editor@example.com', 'https://facebook.com/', 'https://youtube.com/', '#f3730d', '#c82333', '#0abb75', '#ffffff', '#f8f9fa', '#ffffff', '#1a1e21', 'SolaimanLipi', 1, 1, 'ঢাকা', 'ঢাকা', 'DataEnvelope', 'https://www.dataenvelope.com/', 1, 'দেশ ও বিদেশের সত্য ও বস্তুনিষ্ঠ সংবাদ সবার আগে পাওয়ার নির্ভরযোগ্য ডিজিটাল ঠিকানা।')
 ON DUPLICATE KEY UPDATE `id` = 1;
+
+-- Default Pages Seed
+INSERT INTO `pages` (`id`, `title`, `slug`, `content`, `meta_title`, `meta_description`, `status`, `show_in_menu`, `show_in_footer`, `order_index`) VALUES
+(1, 'আমাদের সম্পর্কে', 'about-us', '<h2>আমাদের পরিচিতি</h2><p>আমরা বস্তুনিষ্ঠ, সৎ ও নিরপেক্ষ সাংবাদিকতায় বিশ্বাসী একটি শীর্ষস্থানীয় বাংলা ডিজিটাল সংবাদমাধ্যম। দেশ ও বিদেশের তাৎক্ষণিক খবর, বিশ্লেষণ ও মতামত তুলে ধরাই আমাদের অঙ্গীকার।</p><h3>আমাদের লক্ষ্য ও উদ্দেশ্য</h3><p>সত্য ও সঠিক তথ্য সর্বস্তরের মানুষের কাছে দ্রুততম সময়ে পৌঁছে দেওয়া এবং সামাজিক ন্যায়বিচার ও ইতিবাচক পরিবর্তনের পক্ষে কাজ করা।</p>', 'আমাদের সম্পর্কে - পরিচিতি ও লক্ষ্য', 'নিউজ পোর্টালের লক্ষ্য, উদ্দেশ্য ও পরিচিতি।', 'published', 0, 1, 1),
+(2, 'গোপনীয়তা নীতি', 'privacy-policy', '<h2>গোপনীয়তা নীতি (Privacy Policy)</h2><p>আমাদের ওয়েবসাইট ব্যবহারের সময় আপনার ব্যক্তিগত তথ্যের সুরক্ষা নিশ্চিত করতে আমরা প্রতিশ্রুতিবদ্ধ। এই নীতিমালায় ব্যাখ্যা করা হয়েছে কীভাবে আমরা আপনার তথ্য সংগ্রহ, সংরক্ষণ ও ব্যবহার করি।</p><h3>তথ্য সংগ্রহ</h3><p>আমাদের ওয়েবসাইটে ব্রাউজ করার সময় কুকিজ ও অ্যানালিটিক্স টুলের মাধ্যমে সাধারণ ট্রাফিক ডেটা সংগ্রহ করা হতে পারে, যা ব্যবহারকারীর অভিজ্ঞতা উন্নয়নে সহায়তা করে।</p><h3>তথ্যের নিরাপত্তা</h3><p>আমরা আপনার কোনো ব্যক্তিগত তথ্য কোনো তৃতীয় পক্ষের কাছে বিক্রয় বা হস্তান্তর করি না।</p>', 'গোপনীয়তা নীতি (Privacy Policy)', 'ব্যবহারকারীদের তথ্যের সুরক্ষা সংক্রান্ত বিস্তারিত নীতিমালা।', 'published', 0, 1, 2),
+(3, 'ব্যবহারের শর্তাবলী', 'terms', '<h2>ব্যবহারের শর্তাবলী (Terms of Service)</h2><p>এই ওয়েবসাইটটি ব্যবহার করার মাধ্যমে আপনি আমাদের শর্তাবলী ও নিয়মাবলী মেনে নিতে সম্মত হচ্ছেন।</p><h3>কপিরাইট ও স্বত্ব</h3><p>এই ওয়েবসাইটে প্রকাশিত সকল সংবাদ, ছবি, ভিডিও এবং অন্যান্য সামগ্রীর স্বত্ব সংরক্ষিত। কর্তৃপক্ষের লিখিত অনুমতি ব্যতীত কোনো সামগ্রী অনুলিপি বা পুনপ্রকাশ করা সম্পূর্ণ নিষিদ্ধ।</p>', 'ব্যবহারের শর্তাবলী ও নিয়মাবলী', 'ওয়েবসাইট ব্যবহারের নিয়মাবলী ও আইনি শর্ত।', 'published', 0, 1, 3),
+(4, 'যোগাযোগ', 'contact', '<h2>আমাদের সাথে যোগাযোগ</h2><p>যেকোনো সংবাদ, মতামত, তথ্য বা বিজ্ঞাপনের প্রয়োজনে আমাদের প্রধান কার্যালয় অথবা নিউজরুমে সরাসরি যোগাযোগ করতে পারেন।</p><div class="p-3 bg-light rounded border my-3"><p><strong>অফিস ঠিকানা:</strong> প্রধান কার্যালয়, ঢাকা, বাংলাদেশ</p><p><strong>ইমেইল:</strong> contact@example.com</p><p><strong>ফোন:</strong> +৮৮০ ১৭১১-০০০০০০</p></div>', 'যোগাযোগ করুন - ঠিকানা ও ফোন নম্বর', 'নিউজ পোর্টালের অফিস ঠিকানা ও যোগাযোগের নম্বর।', 'published', 0, 1, 4),
+(5, 'সম্পাদকীয় নীতিমালা', 'editorial-policy', '<h2>সম্পাদকীয় নীতিমালা (Editorial Policy)</h2><p>আমরা হলুদ সাংবাদিকতা ও মিথ্যা প্রচারণা সম্পূর্ণ পরিহার করে সত্যতা যাচাইয়ের মাধ্যমে তথ্য পরিবেশন করি। যেকোনো প্রতিবেদনের ক্ষেত্রে বস্তুনিষ্ঠতা ও সংশ্লিষ্ট পক্ষের ভারসাম্যপূর্ণ বক্তব্য নিশ্চিত করা আমাদের মূল নীতি।</p>', 'সম্পাদকীয় নীতিমালা ও দায়বদ্ধতা', 'বস্তুনিষ্ঠ সাংবাদিকতা ও নৈতিক সম্পাদকীয় নীতিমালা।', 'published', 0, 1, 5),
+(6, 'বিজ্ঞাপন মূল্য ও নিয়মাবলী', 'ad-rates', '<h2>বিজ্ঞাপনের স্থান ও মূল্যতালিকা</h2><p>আমাদের পোর্টালে হেডার ব্যানার, সাইডবার ব্যানার ও ইন-আর্টিকেল বিজ্ঞাপনের জন্য যোগাযোগ করুন। মাসিক এবং বাৎসরিক চুক্তিতে বিশেষ ছাড় প্রদান করা হয়।</p><p>বিজ্ঞাপনের জন্য যোগাযোগ: ads@example.com</p>', 'বিজ্ঞাপন মূল্য ও বিজ্ঞাপন নীতিমালা', 'ডিজিটাল ব্যানার বিজ্ঞাপন ও স্পন্সরড কন্টেন্টের মূল্যতালিকা।', 'published', 0, 1, 6)
+ON DUPLICATE KEY UPDATE `title` = VALUES(`title`);
 
 -- Users (admin@alokitogour.com / Admin@123456)
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `status`)

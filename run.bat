@@ -1,5 +1,5 @@
 @echo off
-title Alokito Gour Local Server
+title News Portal Local Server
 cd /d "%~dp0"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\run_server.ps1"

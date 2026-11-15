@@ -1,17 +1,31 @@
 <?php
 /**
- * Public Navbar Navigation
- * Alokito Gour Clone
+ * Public Navbar Navigation - 100% White-Label & Customizable
  */
 
 declare(strict_types=1);
 
 $navDb = get_db();
+$settings = get_settings();
+
 $menuCategories = $navDb->query("
     SELECT * FROM `categories` 
     WHERE `show_in_menu` = 1 
     ORDER BY `order_index` ASC, `id` ASC
 ")->fetchAll();
+
+// Check if any custom pages should appear in header menu
+$menuPages = [];
+try {
+    $menuPages = $navDb->query("
+        SELECT id, title, slug 
+        FROM `pages` 
+        WHERE `show_in_menu` = 1 AND `status` = 'published' 
+        ORDER BY `order_index` ASC
+    ")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $menuPages = [];
+}
 
 $primaryCount = 7;
 $primaryNav = array_slice($menuCategories, 0, $primaryCount);
@@ -19,6 +33,9 @@ $moreNav = array_slice($menuCategories, $primaryCount);
 
 $currentSlug = $_GET['slug'] ?? '';
 $isHome = empty($currentSlug) && basename($_SERVER['PHP_SELF']) === 'index.php';
+
+$mobileLogo = !empty($settings['logo_mobile']) ? $settings['logo_mobile'] : (!empty($settings['logo_path']) ? $settings['logo_path'] : '');
+$siteTitle = $settings['site_title'] ?? 'বাংলা নিউজ';
 ?>
 <!-- Main Navigation Bar -->
 <nav class="navbar navbar-expand-lg site-navbar p-0">
@@ -28,7 +45,13 @@ $isHome = empty($currentSlug) && basename($_SERVER['PHP_SELF']) === 'index.php';
             <i class="bi bi-list fs-2 text-dark"></i>
         </button>
 
-        <a class="navbar-brand d-lg-none fw-bold text-dark fs-6" href="/">আলোকিত গৌড়</a>
+        <a class="navbar-brand d-lg-none fw-bold text-dark fs-6 d-flex align-items-center" href="/">
+            <?php if (!empty($mobileLogo)): ?>
+                <img src="<?= e($mobileLogo) ?>" alt="<?= e($siteTitle) ?>" style="max-height: 38px;">
+            <?php else: ?>
+                <span><?= e($siteTitle) ?></span>
+            <?php endif; ?>
+        </a>
 
         <!-- Desktop Nav Items -->
         <div class="collapse navbar-collapse d-none d-lg-block" id="desktopNav">
@@ -41,6 +64,14 @@ $isHome = empty($currentSlug) && basename($_SERVER['PHP_SELF']) === 'index.php';
                     <li class="nav-item">
                         <a class="nav-link <?= ($currentSlug === $cat['slug']) ? 'active text-warning' : '' ?>" href="/category/<?= e($cat['slug']) ?>">
                             <?= e($cat['name']) ?>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+
+                <?php foreach ($menuPages as $mp): ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= ($currentSlug === $mp['slug']) ? 'active text-warning' : '' ?>" href="/page/<?= e($mp['slug']) ?>">
+                            <?= e($mp['title']) ?>
                         </a>
                     </li>
                 <?php endforeach; ?>
@@ -100,6 +131,13 @@ $isHome = empty($currentSlug) && basename($_SERVER['PHP_SELF']) === 'index.php';
                 <li class="border-bottom py-2">
                     <a href="/category/<?= e($cat['slug']) ?>" class="fw-medium text-dark text-decoration-none d-block">
                         <?= e($cat['name']) ?>
+                    </a>
+                </li>
+            <?php endforeach; ?>
+            <?php foreach ($menuPages as $mp): ?>
+                <li class="border-bottom py-2">
+                    <a href="/page/<?= e($mp['slug']) ?>" class="fw-medium text-dark text-decoration-none d-block">
+                        <?= e($mp['title']) ?>
                     </a>
                 </li>
             <?php endforeach; ?>

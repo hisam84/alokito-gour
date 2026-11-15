@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 $settings = get_settings();
 $adminName = $_SESSION['admin_user_name'] ?? 'Admin';
-$pageTitle = $pageTitle ?? 'Admin Dashboard | Alokito Gour';
+$pageTitle = $pageTitle ?? ('Admin Dashboard | ' . ($settings['site_title'] ?? 'News Portal'));
 ?>
 <!DOCTYPE html>
 <html lang="en">

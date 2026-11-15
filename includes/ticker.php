@@ -1,10 +1,17 @@
 <?php
 /**
- * Breaking News Ticker Component
- * Alokito Gour Clone
+ * Breaking News Ticker Component - 100% White-Label & Customizable
  */
 
 declare(strict_types=1);
+
+$settings = get_settings();
+$showTicker = (int)($settings['show_ticker'] ?? 1);
+if (!$showTicker) {
+    return;
+}
+
+$tickerTitle = !empty($settings['ticker_title']) ? $settings['ticker_title'] : 'সংবাদ শিরোনাম';
 
 $tickerDb = get_db();
 $tickerPosts = $tickerDb->query("
@@ -33,7 +40,7 @@ if (empty($tickerPosts)) {
         <div class="d-flex align-items-center">
             <div class="ticker-badge">
                 <i class="bi bi-broadcast"></i>
-                <span>সংবাদ শিরোনাম</span>
+                <span><?= e($tickerTitle) ?></span>
             </div>
 
             <div class="ticker-marquee-wrapper">

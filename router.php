@@ -40,9 +40,18 @@ if ($uri === '/search' || $uri === '/search/') {
     exit;
 }
 
-// 4. Custom Page Builder Page: /page/{slug} -> page.php?slug=$1
+// 4. Custom Page Builder or CMS Page: /page/{slug} -> page.php?slug=$1
 if (preg_match('#^/page/([^/]+)/?$#', $uri, $matches)) {
     $_GET['slug'] = $matches[1];
+    require __DIR__ . '/page.php';
+    exit;
+}
+
+// Direct clean URLs for legal & informational pages
+$legalSlugs = ['about-us', 'privacy-policy', 'terms', 'contact', 'editorial-policy', 'ad-rates'];
+$cleanUri = trim($uri, '/');
+if (in_array($cleanUri, $legalSlugs, true)) {
+    $_GET['slug'] = $cleanUri;
     require __DIR__ . '/page.php';
     exit;
 }

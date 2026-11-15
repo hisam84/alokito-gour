@@ -56,3 +56,10 @@
   - Right panel: **live content editor** (inspector) — every keystroke updates the model and refreshes the preview (380 ms debounce).
   - Drag & drop from the icon library directly into the canvas (HTML5 DnD + `postMessage` bridge in `admin/live-preview.php`).
   - Undo/redo, Ctrl + S save, unsaved-changes guard, CSRF-protected AJAX `save_layout` endpoint with widget whitelisting.
+- **Phase 7**: Commercial Multi-Client Turnkey Template Transformation:
+  - Database schema upgraded with dynamic `settings` fields and `pages` table; auto-migration engine in `database/auto_migrate.php`.
+  - Live CSS variable theme customizer supporting 5 Bengali Google fonts, custom color pickers, and 1-click presets.
+  - Complete white-labeling across all templates (`header.php`, `navbar.php`, `footer.php`, `sidebar.php`, `ticker.php`, `area.php`, `search.php`, `single.php`, `login.php`).
+  - Legal & Custom Pages CMS in `admin/pages.php` with clean SEO URLs.
+  - Turnkey 5-step Web Installer in `install.php` for seamless commercial client delivery.
+  - Complete Reseller & Buyer documentation in `TEMPLATE_GUIDE.md`.

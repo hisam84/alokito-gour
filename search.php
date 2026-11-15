@@ -47,8 +47,9 @@ if (!empty($query)) {
     $posts = $dataStmt->fetchAll();
 }
 
+$settings = get_settings();
 $metaTitle = !empty($query) ? 'অনুসন্ধান ফলাফল: ' . $query : 'সংবাদ অনুসন্ধান';
-$metaDescription = 'আলোকিত গৌড় সংবাদ অনুসন্ধান ফলাফল';
+$metaDescription = !empty($query) ? 'অনুসন্ধান ফলাফল: ' . $query . ' - ' . ($settings['site_title'] ?? '') : 'সংবাদ অনুসন্ধান - ' . ($settings['site_title'] ?? '');
 
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/navbar.php';
@@ -93,7 +94,7 @@ include __DIR__ . '/includes/ticker.php';
                         <div class="col-md-6">
                             <article class="news-card">
                                 <a href="/news/<?= (int)$post['id'] ?>/<?= e($post['slug']) ?>" class="card-thumb d-block">
-                                    <img src="<?= e($post['thumbnail'] ?: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=500&q=80') ?>" alt="<?= e($post['title']) ?>">
+                                    <img src="<?= e($post['thumbnail'] ?: get_default_thumbnail()) ?>" alt="<?= e($post['title']) ?>">
                                 </a>
                                 <div class="card-body">
                                     <span class="badge bg-secondary bg-opacity-10 text-secondary mb-1"><?= e($post['category_name']) ?></span>

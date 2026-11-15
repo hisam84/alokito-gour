@@ -76,8 +76,10 @@ $dataStmt->execute();
 $posts = $dataStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // SEO Meta Variables
-$metaTitle = $locationLabel . ' এর সকল খবর - আলোকিত গৌড়';
-$metaDescription = $locationLabel . ' এলাকার সর্বশেষ খবর, তাজা সংবাদ ও আপডেট। আলোকিত গৌড়';
+$settings = get_settings();
+$siteName = $settings['site_title'] ?? 'বাংলা নিউজ পোর্টাল';
+$metaTitle = $locationLabel . ' এর সকল খবর - ' . $siteName;
+$metaDescription = $locationLabel . ' এলাকার সর্বশেষ খবর, তাজা সংবাদ ও আপডেট। ' . $siteName;
 
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/navbar.php';
@@ -126,7 +128,7 @@ include __DIR__ . '/includes/ticker.php';
                         <div class="col-md-6">
                             <article class="news-card h-100 bg-white rounded border shadow-sm overflow-hidden d-flex flex-column">
                                 <a href="/news/<?= (int)$post['id'] ?>/<?= e($post['slug']) ?>" class="card-thumb d-block position-relative">
-                                    <img src="<?= e($post['thumbnail'] ?: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=500&q=80') ?>" alt="<?= e($post['title']) ?>" class="w-100 object-fit-cover" style="height: 190px;">
+                                    <img src="<?= e($post['thumbnail'] ?: get_default_thumbnail()) ?>" alt="<?= e($post['title']) ?>" class="w-100 object-fit-cover" style="height: 190px;">
                                 </a>
                                 
                                 <div class="card-body p-3 d-flex flex-column flex-grow-1">

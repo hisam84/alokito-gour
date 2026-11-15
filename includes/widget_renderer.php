@@ -258,7 +258,7 @@ function render_widget_ad_banner(array $widget, PDO $db, ?array $post = null): s
  */
 function render_widget_category_block(array $widget, PDO $db): string {
     $settings = $widget['settings'] ?? [];
-    $slug = $settings['category_slug'] ?? 'chapai-nawabganj';
+    $slug = $settings['category_slug'] ?? 'national';
     $title = !empty($widget['title']) ? $widget['title'] : widget_get_category_name($db, $slug);
     $limit = (int)($settings['limit'] ?? 5);
     $showMore = $settings['show_more'] ?? true;
@@ -691,8 +691,13 @@ function render_widget_sidebar_tabs(array $widget, PDO $db): string {
 function render_widget_district_filter(array $widget, PDO $db): string {
     require_once __DIR__ . '/bangladesh_geo.php';
     $title = !empty($widget['title']) ? $widget['title'] : 'আমার এলাকার খবর';
+    $siteSettings = get_settings();
+    $defaultSelected = [
+        'division' => $siteSettings['default_division'] ?? '',
+        'district' => $siteSettings['default_district'] ?? ''
+    ];
     return '<div class="district-filter-widget" data-widget-id="' . e($widget['id'] ?? 'district_filter') . '">'
-        . render_area_filter_bar([], false, $title)
+        . render_area_filter_bar($defaultSelected, false, $title)
         . '</div>';
 }
 
@@ -705,15 +710,11 @@ function _old_render_widget_district_filter_deprecated(array $widget, PDO $db): 
             <i class="bi bi-geo-alt-fill text-danger me-1"></i>আমার এলাকার খবর
         </h6>
         <div class="d-flex flex-wrap gap-2">
-            <a href="/category/chapai-nawabganj" class="btn btn-sm btn-outline-secondary">চাঁপাইনবাবগঞ্জ</a>
-            <a href="/category/country" class="btn btn-sm btn-outline-secondary">রাজশাহী</a>
-            <a href="/category/country" class="btn btn-sm btn-outline-secondary">ঢাকা</a>
-            <a href="/category/country" class="btn btn-sm btn-outline-secondary">চট্টগ্রাম</a>
-            <a href="/category/country" class="btn btn-sm btn-outline-secondary">খুলনা</a>
-            <a href="/category/country" class="btn btn-sm btn-outline-secondary">বরিশাল</a>
-            <a href="/category/country" class="btn btn-sm btn-outline-secondary">সিলেট</a>
-            <a href="/category/country" class="btn btn-sm btn-outline-secondary">রংপুর</a>
-            <a href="/category/country" class="btn btn-sm btn-outline-secondary">ময়মনসিংহ</a>
+            <?php
+            $allDivs = ['ঢাকা', 'চট্টগ্রাম', 'রাজশাহী', 'খুলনা', 'বরিশাল', 'সিলেট', 'রংপুর', 'ময়মনসিংহ'];
+            foreach ($allDivs as $dName): ?>
+                <a href="/area?division=<?= urlencode($dName) ?>" class="btn btn-sm btn-outline-secondary"><?= e($dName) ?></a>
+            <?php endforeach; ?>
         </div>
     </div>
     <?php

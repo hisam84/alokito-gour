@@ -9,7 +9,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/auth_guard.php';
 require_once dirname(__DIR__) . '/includes/bangladesh_geo.php';
 
-$pageTitle = 'Publish New Post | Alokito Gour';
+$settings = get_settings();
+$pageTitle = 'Publish New Post | ' . e($settings['site_title'] ?? 'News Portal');
 $db = get_db();
 $settings = get_settings();
 $error = '';
