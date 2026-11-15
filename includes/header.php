@@ -269,8 +269,8 @@ $epaperUrl = $settings['epaper_url'] ?? '#';
 </div>
 <?php endif; ?>
 
-<!-- Main Branding Header -->
-<header class="site-header py-3">
+<!-- Main Branding Header (Desktop Masthead) -->
+<header class="site-header py-3 d-none d-lg-block">
     <div class="container">
         <div class="text-center">
             <a href="/" class="brand-logo d-inline-block">
