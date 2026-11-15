@@ -76,7 +76,7 @@ include __DIR__ . '/includes/ticker.php';
 
         <div class="row g-4">
             <div class="col-lg-8">
-                <article class="bg-white p-4 p-md-5 rounded-3 border shadow-sm">
+                <article class="bg-white p-3 p-sm-4 p-md-5 rounded-3 border shadow-sm">
                     <h1 class="fw-bold text-dark border-bottom pb-3 mb-4 fs-2"><?= e($cmsPage['title']) ?></h1>
                     
                     <div class="page-content-body lh-lg" style="font-size: 1.05rem; color: #334155;">

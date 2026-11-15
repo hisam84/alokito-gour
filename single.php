@@ -85,7 +85,7 @@ include __DIR__ . '/includes/ticker.php';
     <div class="row g-4 layout-main-row">
         <!-- Main Article Column (8 Cols) -->
         <div class="col-lg-8 layout-content-col">
-            <article class="bg-white p-4 rounded-3 border shadow-sm">
+            <article class="bg-white p-3 p-sm-4 rounded-3 border shadow-sm">
                 <!-- Article Headline -->
                 <header class="article-header">
                     <h1 class="article-headline"><?= e($post['title']) ?></h1>

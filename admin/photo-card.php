@@ -186,11 +186,18 @@ include __DIR__ . '/includes/header.php';
 
 .mobile-nav-items {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 0 4px;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.mobile-nav-items::-webkit-scrollbar {
+    display: none;
 }
 
 .mobile-nav-btn {
@@ -201,12 +208,14 @@ include __DIR__ . '/includes/header.php';
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 500;
-    padding: 4px 8px;
+    padding: 4px 6px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .mobile-nav-btn i {
@@ -623,6 +632,12 @@ include __DIR__ . '/includes/header.php';
             <button type="button" class="mobile-nav-btn" data-sheet="sheet-photo">
                 <i class="bi bi-image"></i>
                 <span>Photo</span>
+            </button>
+        </li>
+        <li>
+            <button type="button" class="mobile-nav-btn" data-sheet="sheet-branding">
+                <i class="bi bi-award"></i>
+                <span>Branding</span>
             </button>
         </li>
         <li>
@@ -1471,6 +1486,79 @@ document.addEventListener('DOMContentLoaded', function() {
         renderCard();
     }, { passive: false });
 
+    // Touch Events for Mobile Devices (Drag to Pan & Pinch to Zoom)
+    let isTouching = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchInitialOffsetX = 0;
+    let touchInitialOffsetY = 0;
+    let initialPinchDistance = null;
+    let initialZoomValue = 1.0;
+
+    container.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 1) {
+            isTouching = true;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchInitialOffsetX = parseFloat(imgOffsetXRange.value);
+            touchInitialOffsetY = parseFloat(imgOffsetYRange.value);
+        } else if (e.touches.length === 2) {
+            isTouching = false;
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            initialPinchDistance = Math.hypot(dx, dy);
+            initialZoomValue = parseFloat(imgZoomRange.value);
+        }
+    }, { passive: true });
+
+    container.addEventListener('touchmove', function(e) {
+        if (isTouching && e.touches.length === 1) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const scaleFactor = 1000 / (rect.width || 1);
+
+            const deltaX = (e.touches[0].clientX - touchStartX) * scaleFactor;
+            const deltaY = (e.touches[0].clientY - touchStartY) * scaleFactor;
+
+            let newOffsetX = Math.round(touchInitialOffsetX + deltaX);
+            let newOffsetY = Math.round(touchInitialOffsetY + deltaY);
+
+            newOffsetX = Math.max(-300, Math.min(300, newOffsetX));
+            newOffsetY = Math.max(-300, Math.min(300, newOffsetY));
+
+            imgOffsetXRange.value = newOffsetX;
+            imgOffsetXNumber.value = newOffsetX;
+            imgOffsetYRange.value = newOffsetY;
+            imgOffsetYNumber.value = newOffsetY;
+            renderCard();
+        } else if (e.touches.length === 2 && initialPinchDistance) {
+            e.preventDefault();
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const currentDistance = Math.hypot(dx, dy);
+            const pinchRatio = currentDistance / initialPinchDistance;
+            let newZoom = Math.min(2.5, Math.max(0.5, initialZoomValue * pinchRatio));
+
+            imgZoomRange.value = newZoom.toFixed(2);
+            imgZoomNumber.value = Math.round(newZoom * 100);
+            renderCard();
+        }
+    }, { passive: false });
+
+    container.addEventListener('touchend', function(e) {
+        if (e.touches.length === 0) {
+            isTouching = false;
+            initialPinchDistance = null;
+        } else if (e.touches.length === 1) {
+            isTouching = true;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchInitialOffsetX = parseFloat(imgOffsetXRange.value);
+            touchInitialOffsetY = parseFloat(imgOffsetYRange.value);
+            initialPinchDistance = null;
+        }
+    }, { passive: true });
+
     // -------------------------------------------------------------
     // Export Handlers
     // -------------------------------------------------------------
@@ -1817,6 +1905,56 @@ document.addEventListener('DOMContentLoaded', function() {
                     mOffsetY.value = 0;
                     mOffsetYVal.textContent = '0px';
                 });
+            }
+        },
+        'sheet-branding': {
+            title: 'Organization Branding & Credit',
+            render: () => `
+                <div class="d-flex align-items-center gap-3 p-3 bg-light rounded border mb-3">
+                    <div class="bg-dark rounded p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 55px; height: 38px;">
+                        <img src="${creditImage.src}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                    </div>
+                    <div class="text-truncate">
+                        <span class="small fw-bold text-dark d-block text-truncate">
+                            ${creditImage.src.includes('alokito-gour-credit.png') ? '<?= addslashes(e($settings['site_title'] ?? 'Alokito Gour')) ?> অফিসিয়াল ব্র্যান্ডিং' : 'কাস্টম কার্ড ব্র্যান্ডিং'}
+                        </span>
+                        <span class="text-muted" style="font-size: 0.72rem;">কার্ডের ৮০০px নির্ধারিত পজিশনে প্রদর্শিত</span>
+                    </div>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    <label for="mCustomCreditInput" class="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center gap-2 py-2">
+                        <i class="bi bi-upload"></i> কাস্টম ব্র্যান্ডিং আপলোড করুন
+                    </label>
+                    <input type="file" id="mCustomCreditInput" accept="image/*" class="d-none">
+                    <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center gap-2 py-2" id="mBtnResetCredit">
+                        <i class="bi bi-arrow-counterclockwise"></i> ডিফল্ট ব্র্যান্ডিং ফিরিয়ে আনুন
+                    </button>
+                </div>
+            `,
+            bind: () => {
+                const mInput = document.getElementById('mCustomCreditInput');
+                const mReset = document.getElementById('mBtnResetCredit');
+                if (mInput) {
+                    mInput.addEventListener('change', (e) => {
+                        const file = e.target.files && e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (evt) => {
+                                isCreditLoaded = false;
+                                creditImage.src = evt.target.result;
+                                showToast('কাস্টম ব্র্যান্ডিং ফটো কার্ডে যুক্ত হয়েছে!', 'success');
+                                closeBottomSheet();
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                }
+                if (mReset) {
+                    mReset.addEventListener('click', () => {
+                        btnResetCredit.click();
+                        closeBottomSheet();
+                    });
+                }
             }
         },
         'sheet-ad': {
