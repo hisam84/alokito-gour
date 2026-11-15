@@ -189,7 +189,7 @@ ON DUPLICATE KEY UPDATE `email` = `email`;
 
 -- Default Ad Slots
 INSERT INTO `advertisements` (`position`, `title`, `image_path`, `target_url`, `custom_code`, `status`) VALUES
-('header_right', 'Header Leaderboard Ad', '', '#', '<div class="text-center p-3 border bg-light text-muted small" style="min-height:90px; display:flex; align-items:center; justify-content:center;">বিজ্ঞাপন দিন (৭২৮x৯০)</div>', 1),
+('header_right', 'Header Leaderboard Ad', '', '#', '', 0),
 ('after_lead', 'After Lead Banner', '', '#', '<div class="text-center p-3 border bg-light text-muted small" style="min-height:90px; display:flex; align-items:center; justify-content:center;">বিজ্ঞাপন দিন (৯৭০x৯০)</div>', 1),
 ('sidebar', 'Sidebar Rectangle Ad', '', '#', '', 1),
 ('inside_article', 'In-Article Ad', '', '#', '<div class="text-center p-3 border bg-light text-muted small my-3" style="min-height:100px; display:flex; align-items:center; justify-content:center;">বিজ্ঞাপন দিন (ইন-আর্টিকেল)</div>', 1)

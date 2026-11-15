@@ -270,25 +270,19 @@ $epaperUrl = $settings['epaper_url'] ?? '#';
 <?php endif; ?>
 
 <!-- Main Branding Header -->
-<header class="site-header">
+<header class="site-header py-3">
     <div class="container">
-        <div class="row align-items-center g-3">
-            <div class="col-md-4 text-center text-md-start">
-                <a href="/" class="brand-logo d-inline-block">
-                    <?php if (!empty($settings['logo_path'])): ?>
-                        <img src="<?= e($settings['logo_path']) ?>" alt="<?= e($siteTitle) ?>" class="img-fluid">
-                    <?php else: ?>
-                        <h2 class="fw-bold text-dark mb-0"><?= e($siteTitle) ?></h2>
-                    <?php endif; ?>
-                </a>
-                <?php if (!empty($settings['site_tagline'])): ?>
-                    <p class="small text-muted mb-0 mt-1 d-none d-md-block"><?= e($settings['site_tagline']) ?></p>
+        <div class="text-center">
+            <a href="/" class="brand-logo d-inline-block">
+                <?php if (!empty($settings['logo_path'])): ?>
+                    <img src="<?= e($settings['logo_path']) ?>" alt="<?= e($siteTitle) ?>" class="img-fluid" style="max-height: 80px;">
+                <?php else: ?>
+                    <h1 class="fw-bold text-dark mb-0 fs-2"><?= e($siteTitle) ?></h1>
                 <?php endif; ?>
-            </div>
-
-            <div class="col-md-8 text-center text-md-end">
-                <?= render_ad('header_right') ?>
-            </div>
+            </a>
+            <?php if (!empty($settings['site_tagline'])): ?>
+                <p class="small text-muted mb-0 mt-1"><?= e($settings['site_tagline']) ?></p>
+            <?php endif; ?>
         </div>
     </div>
 </header>
