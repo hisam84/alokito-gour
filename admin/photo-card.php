@@ -78,10 +78,26 @@ if (!empty($settings['watermark_path'])) {
 include __DIR__ . '/includes/header.php';
 ?>
 
-<!-- Google Bengali Fonts for high-fidelity card typography -->
+<!-- Bengali Font for photo card (matches website font) -->
+<?php
+$cardFont = !empty($settings['font_family']) ? $settings['font_family'] : 'SolaimanLipi';
+if ($cardFont === 'Hind Siliguri'): ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<?php elseif ($cardFont === 'Anek Bangla'): ?>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<?php elseif ($cardFont === 'Noto Sans Bengali'): ?>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<?php elseif ($cardFont === 'Kalpurush'): ?>
+<link href="https://fonts.maateen.me/kalpurush/font.css" rel="stylesheet">
+<?php else: ?>
+<link href="https://fonts.maateen.me/solaiman-lipi/font.css" rel="stylesheet">
+<?php endif; ?>
 
 <style>
 /* Main Page Layout */
@@ -370,7 +386,7 @@ include __DIR__ . '/includes/header.php';
                         <label for="cardTitleInput" class="form-label-sm">Card Headline (Bengali Title)</label>
                         <span class="badge bg-light text-secondary border" id="titleCharCount">0 characters</span>
                     </div>
-                    <textarea class="form-control" id="cardTitleInput" rows="3" style="font-family:'Hind Siliguri', sans-serif; font-size:1.05rem; font-weight:600; line-height:1.4;"><?= e($initialTitle) ?></textarea>
+                    <textarea class="form-control" id="cardTitleInput" rows="3" style="font-family:'<?= e($cardFont) ?>', sans-serif; font-size:1.05rem; font-weight:600; line-height:1.4;"><?= e($initialTitle) ?></textarea>
                     <div class="form-text" style="font-size:0.75rem;">Press Enter inside the text to force a custom line break.</div>
                 </div>
 
@@ -425,6 +441,21 @@ include __DIR__ . '/includes/header.php';
                     </div>
                 </div>
 
+                <!-- Bold / Normal Toggle -->
+                <div class="mb-3">
+                    <label class="form-label-sm">Font Weight</label>
+                    <div class="btn-group w-100" role="group" aria-label="Font Weight Toggle">
+                        <input type="radio" class="btn-check" name="fontWeightToggle" id="fontWeightBold" value="700" checked autocomplete="off">
+                        <label class="btn btn-outline-dark" for="fontWeightBold">
+                            <i class="bi bi-type-bold me-1"></i> Bold
+                        </label>
+                        <input type="radio" class="btn-check" name="fontWeightToggle" id="fontWeightNormal" value="400" autocomplete="off">
+                        <label class="btn btn-outline-dark" for="fontWeightNormal">
+                            <i class="bi bi-type me-1"></i> Normal
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Date Text & Settings -->
                 <div class="row g-3">
                     <div class="col-sm-8">
@@ -436,7 +467,7 @@ include __DIR__ . '/includes/header.php';
                             <button class="btn btn-outline-secondary bg-light border" type="button" id="btnOpenCalendar" title="ক্যালেন্ডার থেকে তারিখ নির্বাচন করুন" style="cursor: pointer;">
                                 <i class="bi bi-calendar-event text-primary fs-6"></i>
                             </button>
-                            <input type="text" class="form-control" id="cardDateInput" value="<?= e($initialDate) ?>" placeholder="যেমন: ২৮ অক্টোবর ২০২৬" style="font-family:'Hind Siliguri', sans-serif; font-weight:600;">
+                            <input type="text" class="form-control" id="cardDateInput" value="<?= e($initialDate) ?>" placeholder="যেমন: ২৮ অক্টোবর ২০২৬" style="font-family:'<?= e($cardFont) ?>', sans-serif; font-weight:600;">
                             <input type="date" id="nativeDatePicker" class="d-none" value="<?= e($initialRawDate) ?>">
                             <button class="btn btn-outline-secondary bg-light border" type="button" id="btnResetNewsDate" title="মূল নিউজের তারিখ ফিরিয়ে আনুন">
                                 <i class="bi bi-arrow-clockwise text-secondary"></i>
@@ -776,6 +807,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentNewsOriginalRawDate = <?= json_encode($initialRawDate) ?>;
     let line1Color = '#FFE600';
     let line2Color = '#FFFFFF';
+    const cardFontFamily = <?= json_encode($cardFont) ?>;
+    let headlineFontWeight = 700;
 
     // Bengali Digits & Months for Date Formatting
     const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
@@ -991,7 +1024,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.fillStyle = '#0f2744';
             ctx.fillRect(0, 0, 1000, 550);
             ctx.fillStyle = 'rgba(255,255,255,0.2)';
-            ctx.font = '500 24px "Hind Siliguri", sans-serif';
+            ctx.font = `500 24px "${cardFontFamily}", sans-serif`;
             ctx.textAlign = 'center';
             ctx.fillText('No image selected or uploaded', 500, 275);
         }
@@ -1006,7 +1039,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (dateText) {
             ctx.save();
             const dateFontSize = parseInt(dateSizeRange.value, 10);
-            ctx.font = `700 ${dateFontSize}px "Hind Siliguri", "Anek Bangla", "SolaimanLipi", sans-serif`;
+            ctx.font = `700 ${dateFontSize}px "${cardFontFamily}", sans-serif`;
             ctx.fillStyle = '#FFFFFF';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -1028,7 +1061,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const lineHeightFactor = parseFloat(lineHeightRange.value);
             const lineHeight = fontSize * lineHeightFactor;
 
-            ctx.font = `700 ${fontSize}px "Hind Siliguri", "Anek Bangla", "SolaimanLipi", sans-serif`;
+            ctx.font = `${headlineFontWeight} ${fontSize}px "${cardFontFamily}", sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
@@ -1108,21 +1141,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Portal Name
             ctx.fillStyle = '#FFFFFF';
-            ctx.font = '700 36px "Hind Siliguri", "Anek Bangla", sans-serif';
+            ctx.font = `700 36px "${cardFontFamily}", sans-serif`;
             ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
             ctx.shadowBlur = 8;
             ctx.fillText('<?= addslashes($settings["site_title"] ?? "Alokito Gour - আলোকিত গৌড়") ?>', 500, 845);
 
             // Website URL & Tagline
             ctx.fillStyle = '#f3730d';
-            ctx.font = '600 20px "Hind Siliguri", sans-serif';
+            ctx.font = `600 20px "${cardFontFamily}", sans-serif`;
             ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
             ctx.shadowBlur = 4;
             ctx.fillText('<?= addslashes(!empty($settings["site_tagline"]) ? $settings["site_tagline"] : "www.alokitogour.com") ?>', 500, 890);
 
             // Social handle info
             ctx.fillStyle = '#cbd5e1';
-            ctx.font = '500 16px "Hind Siliguri", sans-serif';
+            ctx.font = `500 16px "${cardFontFamily}", sans-serif`;
             ctx.fillText('<?= addslashes(str_replace(["https://", "http://"], "", $settings["facebook_url"] ?? "facebook.com/alokitogour")) ?>', 500, 925);
 
             ctx.restore();
@@ -1285,6 +1318,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('.color-chip-btn[data-target="line2"]').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
             }
+            renderCard();
+        });
+    });
+
+    // Bold / Normal Font Weight Toggle
+    document.querySelectorAll('input[name="fontWeightToggle"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            headlineFontWeight = parseInt(this.value, 10);
             renderCard();
         });
     });
@@ -1731,7 +1772,16 @@ document.addEventListener('DOMContentLoaded', function() {
             render: () => `
                 <div class="mb-3">
                     <label class="form-label-sm">Headline Text</label>
-                    <textarea class="form-control" id="mTitleInput" rows="3" style="font-family:'Hind Siliguri', sans-serif;">${titleInput.value}</textarea>
+                    <textarea class="form-control" id="mTitleInput" rows="3" style="font-family:'${cardFontFamily}', sans-serif;">${titleInput.value}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label-sm">Font Weight</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="mFontWeightToggle" id="mFontWeightBold" value="700" ${headlineFontWeight === 700 ? 'checked' : ''} autocomplete="off">
+                        <label class="btn btn-outline-dark" for="mFontWeightBold"><i class="bi bi-type-bold me-1"></i> Bold</label>
+                        <input type="radio" class="btn-check" name="mFontWeightToggle" id="mFontWeightNormal" value="400" ${headlineFontWeight === 400 ? 'checked' : ''} autocomplete="off">
+                        <label class="btn btn-outline-dark" for="mFontWeightNormal"><i class="bi bi-type me-1"></i> Normal</label>
+                    </div>
                 </div>
                 <div class="row g-2 mb-3">
                     <div class="col-6">
@@ -1790,6 +1840,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     line2ColorPicker.value = '#FFFFFF';
                     mLine2.value = '#FFFFFF';
                     line2ColorPicker.dispatchEvent(new Event('input'));
+                });
+                // Mobile bold/normal toggle sync
+                document.querySelectorAll('input[name="mFontWeightToggle"]').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        headlineFontWeight = parseInt(this.value, 10);
+                        // Sync desktop toggle
+                        const desktopRadio = document.getElementById(this.value === '700' ? 'fontWeightBold' : 'fontWeightNormal');
+                        if (desktopRadio) desktopRadio.checked = true;
+                        renderCard();
+                    });
                 });
             }
         },
