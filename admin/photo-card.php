@@ -246,30 +246,25 @@ if ($cardFont === 'Hind Siliguri'): ?>
 
 /* Mobile Sliding Sheet Modal */
 .mobile-sheet-backdrop {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.55);
-    z-index: 1060;
+    display: none !important; /* Disabled for Canva/PicsArt split view so photocard is never dimmed */
 }
 
 .mobile-bottom-sheet {
     display: none;
     position: fixed;
-    bottom: 60px;
+    bottom: 56px;
     left: 0;
     right: 0;
-    max-height: 75vh;
+    height: 48vh;
+    max-height: 48vh;
     background: #ffffff;
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-    z-index: 1070;
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+    border-top: 2px solid #0284c7;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    z-index: 1060;
+    box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.25);
     overflow-y: auto;
-    padding: 16px 20px 24px;
+    padding: 12px 16px 20px;
     transform: translateY(100%);
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -280,10 +275,17 @@ if ($cardFont === 'Hind Siliguri'): ?>
 
 .sheet-drag-handle {
     width: 44px;
-    height: 4px;
+    height: 5px;
     background: #cbd5e1;
-    border-radius: 2px;
-    margin: 0 auto 12px;
+    border-radius: 3px;
+    margin: 0 auto 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.sheet-drag-handle:hover,
+.sheet-drag-handle:active {
+    background: #94a3b8;
 }
 
 /* Responsive Rules */
@@ -304,6 +306,52 @@ if ($cardFont === 'Hind Siliguri'): ?>
     }
     .canvas-container {
         max-width: 100%;
+    }
+
+    /* Canva / PicsArt Style Split Studio View when sheet is open */
+    body.mobile-sheet-open {
+        overflow: hidden;
+    }
+    body.mobile-sheet-open .container-fluid > .d-flex.flex-wrap {
+        display: none !important;
+    }
+    body.mobile-sheet-open .container-fluid {
+        padding: 0 !important;
+    }
+    body.mobile-sheet-open .preview-col {
+        margin-bottom: 0 !important;
+    }
+    body.mobile-sheet-open .photocard-preview-wrapper {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: calc(52vh - 28px);
+        max-height: calc(52vh - 28px);
+        z-index: 1045;
+        border-radius: 0;
+        padding: 6px 10px 8px;
+        margin: 0;
+        background: #0b1120;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+    body.mobile-sheet-open .photocard-preview-wrapper .canvas-container {
+        width: 100%;
+        max-width: 380px;
+        margin: 0 auto;
+        flex-shrink: 0;
+    }
+    body.mobile-sheet-open .photocard-preview-wrapper > .d-flex.flex-column,
+    body.mobile-sheet-open .photocard-preview-wrapper > p.text-muted {
+        display: none !important;
+    }
+    body.mobile-sheet-open .photocard-preview-wrapper .d-flex.align-items-center.justify-content-between.w-100 {
+        margin-bottom: 4px !important;
     }
 }
 
@@ -690,10 +738,15 @@ if ($cardFont === 'Hind Siliguri'): ?>
 <div class="mobile-sheet-backdrop" id="sheetBackdrop"></div>
 
 <div class="mobile-bottom-sheet" id="mobileBottomSheet">
-    <div class="sheet-drag-handle"></div>
+    <div class="sheet-drag-handle" id="sheetDragHandle" title="ট্যাপ করে মিনিমাইজ করুন"></div>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold m-0" id="sheetTitle">Settings</h6>
-        <button type="button" class="btn-close" id="sheetCloseBtn" aria-label="Close"></button>
+        <h6 class="fw-bold m-0 d-flex align-items-center gap-2" id="sheetTitle">Settings</h6>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-light border py-1 px-2 text-muted" id="sheetMinimizeBtn" title="মিনিমাইজ / বন্ধ করুন">
+                <i class="bi bi-chevron-down"></i>
+            </button>
+            <button type="button" class="btn-close" id="sheetCloseBtn" aria-label="Close"></button>
+        </div>
     </div>
     <div id="sheetBodyContent">
         <!-- Injected dynamically on tab tap -->
@@ -1736,6 +1789,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const sheetTitle = document.getElementById('sheetTitle');
     const sheetBody = document.getElementById('sheetBodyContent');
     const sheetCloseBtn = document.getElementById('sheetCloseBtn');
+    const sheetMinimizeBtn = document.getElementById('sheetMinimizeBtn');
+    const sheetDragHandle = document.getElementById('sheetDragHandle');
+    let currentOpenSheetKey = null;
 
     const sheetTemplates = {
         'sheet-article': {
@@ -2073,38 +2129,63 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     function openBottomSheet(sheetKey) {
+        // Toggle/collapse if clicking same active tab
+        if (currentOpenSheetKey === sheetKey && mobileSheet.classList.contains('show')) {
+            closeBottomSheet();
+            return;
+        }
+
         const config = sheetTemplates[sheetKey];
         if (!config) return;
 
+        currentOpenSheetKey = sheetKey;
         sheetTitle.textContent = config.title;
         sheetBody.innerHTML = config.render();
         if (config.bind) config.bind();
 
-        sheetBackdrop.style.display = 'block';
+        // Activate mobile split view studio mode
+        document.body.classList.add('mobile-sheet-open');
+
         mobileSheet.style.display = 'block';
         setTimeout(() => mobileSheet.classList.add('show'), 10);
+
+        mobileNavBtns.forEach(b => {
+            b.classList.toggle('active', b.getAttribute('data-sheet') === sheetKey);
+        });
+
+        // Ensure preview wrapper scrolls smoothly to headline area when headline/ad is edited
+        const previewWrapper = document.querySelector('.photocard-preview-wrapper');
+        if (previewWrapper) {
+            if (sheetKey === 'sheet-headline' || sheetKey === 'sheet-ad') {
+                previewWrapper.scrollTo({ top: 110, behavior: 'smooth' });
+            } else if (sheetKey === 'sheet-article' || sheetKey === 'sheet-photo') {
+                previewWrapper.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
     }
 
     function closeBottomSheet() {
+        currentOpenSheetKey = null;
         mobileSheet.classList.remove('show');
         setTimeout(() => {
             mobileSheet.style.display = 'none';
-            sheetBackdrop.style.display = 'none';
         }, 250);
+        document.body.classList.remove('mobile-sheet-open');
         mobileNavBtns.forEach(b => b.classList.remove('active'));
     }
 
     mobileNavBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            mobileNavBtns.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
             const sheetKey = this.getAttribute('data-sheet');
             openBottomSheet(sheetKey);
         });
     });
 
-    sheetCloseBtn.addEventListener('click', closeBottomSheet);
-    sheetBackdrop.addEventListener('click', closeBottomSheet);
+    if (sheetCloseBtn) sheetCloseBtn.addEventListener('click', closeBottomSheet);
+    if (sheetMinimizeBtn) sheetMinimizeBtn.addEventListener('click', closeBottomSheet);
+    if (sheetDragHandle) sheetDragHandle.addEventListener('click', closeBottomSheet);
+    if (sheetBackdrop) sheetBackdrop.addEventListener('click', closeBottomSheet);
 
     // Toast Notification Helper
     function showToast(message, type = 'success') {
