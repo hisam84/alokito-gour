@@ -24,7 +24,6 @@ adapters/
 model_capabilities.yaml
 scripts/
 
-# Installed site secrets & locks
-config/installed.lock
+# Installed site secrets
 config/db_custom.php
 

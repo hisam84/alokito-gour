@@ -27,6 +27,7 @@ if (!defined('DB_NAME')) define('DB_NAME', getenv('DB_NAME') ?: 'alokito_gour');
 if (!defined('DB_USER')) define('DB_USER', getenv('DB_USER') ?: 'root');
 if (!defined('DB_PASS')) define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : '');
 if (!defined('DB_CHARSET')) define('DB_CHARSET', 'utf8mb4');
+if (!defined('DB_TIMEOUT')) define('DB_TIMEOUT', (int)(getenv('DB_TIMEOUT') ?: 5));
 
 // SQLite File Path (for Local Development)
 if (!defined('SQLITE_FILE')) define('SQLITE_FILE', dirname(__DIR__) . '/database/alokito_gour.sqlite');
@@ -75,12 +76,24 @@ function get_db(): PDO {
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES   => false,
+        PDO::ATTR_TIMEOUT            => DB_TIMEOUT,
     ];
 
     try {
         $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+
+        // Auto-run migrations / verify tables if settings doesn't exist
+        static $checkedSchema = false;
+        if (!$checkedSchema) {
+            $checkedSchema = true;
+            require_once dirname(__DIR__) . '/database/auto_migrate.php';
+            run_template_migrations($pdo);
+        }
+
         return $pdo;
     } catch (PDOException $mysqlEx) {
+        error_log("MySQL Connection Failure (Host: " . DB_HOST . "): " . $mysqlEx->getMessage());
+
         // If MySQL fails and SQLite driver is available, initialize SQLite fallback
         if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
             require_once dirname(__DIR__) . '/database/init_sqlite.php';
@@ -90,16 +103,28 @@ function get_db(): PDO {
             return $pdo;
         }
 
-        die('<div style="font-family:sans-serif;padding:30px;line-height:1.6;max-width:650px;margin:40px auto;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;">
-            <h2 style="color:#e11d48;margin-top:0;">Database Connection Error</h2>
-            <p>Could not connect to MySQL database <code>' . htmlspecialchars(DB_NAME) . '</code> on <code>' . htmlspecialchars(DB_HOST) . '</code>.</p>
-            <p><strong>Setup Instructions:</strong></p>
-            <ol>
-                <li>Run <code>php -c php.ini database/init_sqlite.php</code> to use local SQLite instantly.</li>
-                <li>Or start your MySQL service and import <code>setup.sql</code>.</li>
-            </ol>
-            <small style="color:#64748b;">Error: ' . htmlspecialchars($mysqlEx->getMessage()) . '</small>
-        </div>');
+        // Sanitized production error page (defends against Information Disclosure)
+        http_response_code(503);
+        die('<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Database Service Unavailable</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+                body { background: #0f172a; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+                .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; max-width: 500px; }
+            </style>
+        </head>
+        <body>
+            <div class="card p-4 text-center">
+                <h4 class="text-danger mb-2">Database Service Unavailable</h4>
+                <p class="text-light-50 small mb-3">The application could not establish a connection to the database. Please ensure the database server is running and reachable.</p>
+                <div class="text-muted small">Code: ERR_DB_CONN_TIMEOUT</div>
+            </div>
+        </body>
+        </html>');
     }
 }
 

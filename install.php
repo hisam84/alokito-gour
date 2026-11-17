@@ -9,6 +9,54 @@ declare(strict_types=1);
 $lockFile = __DIR__ . '/config/installed.lock';
 $isLocked = file_exists($lockFile);
 
+if ($isLocked) {
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Application Already Installed</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+        <style>
+            body {
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                font-family: system-ui, -apple-system, sans-serif;
+            }
+            .card {
+                max-width: 520px;
+                border-radius: 12px;
+                border: 0;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="card p-4 text-center">
+            <div class="mb-3">
+                <i class="bi bi-shield-check text-success" style="font-size: 3rem;"></i>
+            </div>
+            <h4 class="fw-bold text-dark">Portal Already Installed</h4>
+            <p class="text-muted small mb-4">
+                This installation wizard has been locked for security. To re-install or re-configure, please remove <code>config/installed.lock</code> via server terminal.
+            </p>
+            <div class="d-flex gap-2 justify-content-center">
+                <a href="/" class="btn btn-outline-secondary btn-sm px-3"><i class="bi bi-house me-1"></i> Visit Website</a>
+                <a href="/admin/login.php" class="btn btn-primary btn-sm px-3"><i class="bi bi-speedometer2 me-1"></i> Admin Panel</a>
+            </div>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
 $step = (int)($_GET['step'] ?? 1);
 $error = '';
 $success = '';

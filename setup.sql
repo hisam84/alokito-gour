@@ -1,9 +1,10 @@
 -- Database: alokito_gour
 -- Charset: utf8mb4_unicode_ci
--- Generated for cPanel MySQL Deployment
+-- Generated for Production MySQL / Remote Deployment
 
-CREATE DATABASE IF NOT EXISTS `alokito_gour` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `alokito_gour`;
+-- Note: Select your database first or uncomment below if you have CREATE DATABASE permissions:
+-- CREATE DATABASE IF NOT EXISTS `alokito_gour` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- USE `alokito_gour`;
 
 -- 1. Settings Table (Fully Customizable White-Label CMS)
 CREATE TABLE IF NOT EXISTS `settings` (

@@ -17,6 +17,46 @@ function run_template_migrations(?PDO $db = null): array {
     $logs = [];
     $isSqlite = ($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite');
 
+    // 0. Auto-initialize base schema if `settings` table does not exist
+    $hasSettings = false;
+    try {
+        if ($isSqlite) {
+            $hasSettings = (bool)$db->query("SELECT 1 FROM sqlite_master WHERE type='table' AND name='settings'")->fetchColumn();
+        } else {
+            $hasSettings = (bool)$db->query("SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'settings'")->fetchColumn();
+        }
+    } catch (Exception $e) {
+        $hasSettings = false;
+    }
+
+    if (!$hasSettings) {
+        $setupSqlPath = dirname(__DIR__) . '/setup.sql';
+        if (file_exists($setupSqlPath)) {
+            $sqlContent = file_get_contents($setupSqlPath);
+            $lines = explode("\n", $sqlContent);
+            $cleanSql = '';
+            foreach ($lines as $line) {
+                $trimmed = trim($line);
+                if (str_starts_with($trimmed, '--') || str_starts_with($trimmed, '/*')) {
+                    continue;
+                }
+                $cleanSql .= $line . "\n";
+            }
+            $queries = explode(';', $cleanSql);
+            foreach ($queries as $q) {
+                $q = trim($q);
+                if (!empty($q)) {
+                    try {
+                        $db->exec($q);
+                    } catch (Exception $qe) {
+                        $logs[] = "Setup note: " . $qe->getMessage();
+                    }
+                }
+            }
+            $logs[] = "Base database schema initialized from setup.sql successfully.";
+        }
+    }
+
     // 1. Ensure `settings` table has all necessary custom columns
     $settingsColumns = [
         'logo_footer'               => "VARCHAR(255) NULL",

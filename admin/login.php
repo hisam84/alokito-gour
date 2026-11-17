@@ -53,7 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Invalid email address or password!';
                 }
             } catch (Exception $e) {
-                $error = 'Server issue: ' . $e->getMessage();
+                error_log("Admin Login Error: " . $e->getMessage());
+                $error = 'Database or server connection issue. Please try again later.';
             }
         }
     }
